@@ -22,14 +22,12 @@ public sealed class LoginService
 
     public async Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
-        // Validate payload before account lookup.
         var errors = Validate(request);
         if (errors.Count > 0)
         {
             return LoginResult.Failure(errors);
         }
 
-        // Normalize username so login is case-insensitive.
         var normalizedUsername = request.Username.Trim().ToUpperInvariant();
         var account = await accountRepository.GetByNormalizedUsernameAsync(normalizedUsername, cancellationToken);
 
@@ -38,14 +36,12 @@ public sealed class LoginService
             return InvalidCredentials();
         }
 
-        // Verify provided password against stored hash.
         var passwordResult = passwordHasher.VerifyHashedPassword(account, account.PasswordHash, request.Password);
         if (passwordResult == PasswordVerificationResult.Failed)
         {
             return InvalidCredentials();
         }
 
-        // On success, issue JWT token used by protected endpoints.
         return LoginResult.Success(tokenService.CreateAuthenticationResponse(account));
     }
 

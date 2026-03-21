@@ -4,7 +4,6 @@ public sealed class PageResponse
 {
     public Guid Id { get; init; }
 
-    // Owner account id for the scripture record.
     public Guid UserId { get; init; }
     public string Source { get; init; } = string.Empty;
     public string Book { get; init; } = string.Empty;
@@ -12,7 +11,6 @@ public sealed class PageResponse
     public int VerseStart { get; init; }
     public int? VerseEnd { get; init; }
 
-    // Human-friendly verse representation (single verse or range).
     public string Reference { get; init; } = string.Empty;
     public string Text { get; init; } = string.Empty;
     public string? Notes { get; init; }

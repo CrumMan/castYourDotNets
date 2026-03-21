@@ -3,7 +3,7 @@ namespace castYourDotNets.Models;
 public class PageClass
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
-    // Ownership link: each scripture entry belongs to one registered user.
+
     public Guid UserId { get; private set; }
     public UserAccount? User { get; private set; }
     public string Source { get; private set; } = string.Empty;
@@ -19,7 +19,6 @@ public class PageClass
     public int ReviewStreakDays { get; private set; }
     public DateTimeOffset? LastReviewedAtUtc { get; private set; }
 
-    // Required by EF Core materialization.
     private PageClass()
     {
     }

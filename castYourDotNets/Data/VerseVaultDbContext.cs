@@ -10,17 +10,12 @@ public sealed class VerseVaultDbContext : DbContext
     {
     }
 
-    // User identity records (username, password hash, creation metadata).
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
 
-    // Scripture memorization entries owned by a single user.
     public DbSet<PageClass> PageClasses => Set<PageClass>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // User account constraints:
-        // - username and normalized username are required
-        // - normalized username is unique so duplicates are blocked at DB level
         modelBuilder.Entity<UserAccount>(entity =>
         {
             entity.HasKey(account => account.Id);
@@ -30,10 +25,7 @@ public sealed class VerseVaultDbContext : DbContext
             entity.HasIndex(account => account.NormalizedUsername).IsUnique();
         });
 
-        // Scripture entry constraints + ownership relationship:
-        // - required scripture metadata
-        // - one-to-many relationship from user -> scripture entries
-        // - cascade delete so deleting an account removes its personal scripture records
+        // One-to-many ownership (UserAccount -> PageClass), cascade delete on account removal.
         modelBuilder.Entity<PageClass>(entity =>
         {
             entity.HasKey(page => page.Id);

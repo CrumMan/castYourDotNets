@@ -4,7 +4,6 @@ namespace castYourDotNets.Services;
 
 public sealed class LoginResult
 {
-    // Service-level result wrapper for login success vs credential/validation errors.
     public bool Succeeded { get; private init; }
     public AuthenticationResponse? Authentication { get; private init; }
     public IDictionary<string, string[]> Errors { get; private init; } = new Dictionary<string, string[]>();

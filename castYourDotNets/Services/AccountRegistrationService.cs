@@ -8,7 +8,6 @@ namespace castYourDotNets.Services;
 
 public sealed class AccountRegistrationService
 {
-    // Enforces a consistent username format across clients and backend.
     private static readonly Regex UsernamePattern = new("^[a-zA-Z0-9._-]{3,32}$", RegexOptions.Compiled);
 
     private readonly IAccountRepository accountRepository;
@@ -26,7 +25,6 @@ public sealed class AccountRegistrationService
         RegisterAccountRequest request,
         CancellationToken cancellationToken = default)
     {
-        // Validate early to avoid unnecessary persistence work.
         var errors = Validate(request);
         if (errors.Count > 0)
         {
@@ -54,7 +52,7 @@ public sealed class AccountRegistrationService
 
         try
         {
-            // Persist only password hashes; never persist plaintext passwords.
+            // Persist only password hashes; never store plaintext passwords.
             var savedAccount = await accountRepository.AddAsync(account, cancellationToken);
 
             return AccountRegistrationResult.Success(new AccountResponse
@@ -76,7 +74,6 @@ public sealed class AccountRegistrationService
 
     private static Dictionary<string, string[]> Validate(RegisterAccountRequest request)
     {
-        // Return field-level errors in ValidationProblem format.
         var errors = new Dictionary<string, string[]>();
 
         if (string.IsNullOrWhiteSpace(request.Username))

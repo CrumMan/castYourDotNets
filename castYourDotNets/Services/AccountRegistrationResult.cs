@@ -4,7 +4,6 @@ namespace castYourDotNets.Services;
 
 public sealed class AccountRegistrationResult
 {
-    // Service-level result wrapper to separate success payload from validation errors.
     public bool Succeeded { get; private init; }
     public AccountResponse? Account { get; private init; }
     public IDictionary<string, string[]> Errors { get; private init; } = new Dictionary<string, string[]>();

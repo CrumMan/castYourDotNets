@@ -20,10 +20,8 @@ public sealed class TokenService
 
     public AuthenticationResponse CreateAuthenticationResponse(UserAccount account)
     {
-        // Token lifetime is configurable to keep security policy in one place.
         var expiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(jwtOptions.ExpirationMinutes);
 
-        // Claims identify the authenticated user across protected endpoints.
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
@@ -32,7 +30,6 @@ public sealed class TokenService
             new Claim(JwtRegisteredClaimNames.UniqueName, account.Username)
         };
 
-        // Use HMAC SHA-256 with configured symmetric signing key.
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey));
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
@@ -43,7 +40,6 @@ public sealed class TokenService
             expires: expiresAtUtc.UtcDateTime,
             signingCredentials: credentials);
 
-        // Return both token metadata and sanitized account data for client bootstrap.
         return new AuthenticationResponse
         {
             AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
