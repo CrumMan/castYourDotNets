@@ -2,8 +2,10 @@ namespace castYourDotNets.Models;
 
 public class PageClass
 {
-    public Guid Id { get; init; } = Guid.NewGuid();
-    public string UserId { get; init; } = string.Empty;
+    public Guid Id { get; private set; } = Guid.NewGuid();
+
+    public Guid UserId { get; private set; }
+    public UserAccount? User { get; private set; }
     public string Source { get; private set; } = string.Empty;
     public string Book { get; private set; } = string.Empty;
     public int Chapter { get; private set; }
@@ -17,8 +19,12 @@ public class PageClass
     public int ReviewStreakDays { get; private set; }
     public DateTimeOffset? LastReviewedAtUtc { get; private set; }
 
+    private PageClass()
+    {
+    }
+
     public PageClass(
-        string userId,
+        Guid userId,
         string source,
         string book,
         int chapter,
@@ -67,6 +73,10 @@ public class PageClass
 
     public void RecordReview(DateTimeOffset? reviewedAtUtc = null)
     {
+        // Streak rules:
+        // - same day review does not increment
+        // - next-day review increments
+        // - any larger gap resets streak to 1
         var now = reviewedAtUtc ?? DateTimeOffset.UtcNow;
 
         if (LastReviewedAtUtc is null)
@@ -105,6 +115,16 @@ public class PageClass
         if (value <= 0)
         {
             throw new ArgumentOutOfRangeException(paramName, "Value must be greater than zero.");
+        }
+
+        return value;
+    }
+
+    private static Guid Require(Guid value, string paramName)
+    {
+        if (value == Guid.Empty)
+        {
+            throw new ArgumentException("Value is required.", paramName);
         }
 
         return value;
