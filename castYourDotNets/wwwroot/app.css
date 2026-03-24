@@ -1,0 +1,157 @@
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #f7f7f8;
+  color: #1f2937;
+}
+
+.app-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+}
+
+.app-nav {
+  background: #111827;
+  color: #f9fafb;
+  padding: 1.5rem 1rem;
+}
+
+.app-main {
+  padding: 2rem;
+}
+
+.nav-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.nav-list a {
+  display: block;
+  color: #e5e7eb;
+  text-decoration: none;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.4rem;
+}
+
+.nav-list a.active,
+.nav-list a:hover {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+.scriptures-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.input {
+  border: 1px solid #d1d5db;
+  border-radius: 0.35rem;
+  padding: 0.5rem;
+  font: inherit;
+}
+
+.textarea {
+  min-height: 140px;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+.btn.danger {
+  border-color: #b91c1c;
+  color: #b91c1c;
+}
+
+.scripture-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.scripture-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.scripture-reference {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+}
+
+.scripture-topic {
+  margin: 0.4rem 0 0;
+  color: #4b5563;
+}
+
+@media (max-width: 800px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-main {
+    padding: 1rem;
+  }
+
+  .scriptures-grid {
+    grid-template-columns: 1fr;
+  }
+}
