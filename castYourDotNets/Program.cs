@@ -30,7 +30,8 @@ builder.Services.AddScoped<AccountRegistrationService>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddRazorComponents();
-builder.Services.AddSingleton<ScriptureService>();
+builder.Services.AddHttpClient(nameof(ScriptureService));
+builder.Services.AddScoped<ScriptureService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -61,6 +62,22 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<VerseVaultDbContext>();
     await dbContext.Database.EnsureCreatedAsync();
+
+    await dbContext.Database.ExecuteSqlRawAsync(
+        """
+        CREATE TABLE IF NOT EXISTS Scriptures (
+            Id TEXT NOT NULL PRIMARY KEY,
+            Reference TEXT NOT NULL,
+            Text TEXT NOT NULL,
+            Topic TEXT NOT NULL,
+            CreatedAtUtc TEXT NOT NULL,
+            IsMemorized INTEGER NOT NULL,
+            PracticeCount INTEGER NOT NULL,
+            CurrentStreakDays INTEGER NOT NULL,
+            LastPracticedAtUtc TEXT NULL,
+            MemorizedAtUtc TEXT NULL
+        );
+        """);
 }
 
 app.UseHttpsRedirection();
@@ -132,7 +149,144 @@ app.MapGet("/api/accounts/me", async (
         });
 }).RequireAuthorization();
 
+app.MapGet("/api/scriptures", async (
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var scriptures = await dbContext.Scriptures
+        .OrderBy(scripture => scripture.Reference)
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(scriptures);
+});
+
+app.MapGet("/api/scriptures/{id:guid}", async (
+    Guid id,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var scripture = await dbContext.Scriptures.FindAsync([id], cancellationToken);
+    return scripture is null ? Results.NotFound() : Results.Ok(scripture);
+});
+
 app.MapPost("/api/scriptures", async (
+    Scripture request,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var scripture = new Scripture
+    {
+        Reference = request.Reference,
+        Text = request.Text,
+        Topic = request.Topic,
+        CreatedAtUtc = DateTime.UtcNow,
+        IsMemorized = request.IsMemorized,
+        PracticeCount = request.PracticeCount,
+        CurrentStreakDays = request.CurrentStreakDays,
+        LastPracticedAtUtc = request.LastPracticedAtUtc,
+        MemorizedAtUtc = request.MemorizedAtUtc
+    };
+
+    dbContext.Scriptures.Add(scripture);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    return Results.Created($"/api/scriptures/{scripture.Id}", scripture);
+});
+
+app.MapPut("/api/scriptures/{id:guid}", async (
+    Guid id,
+    Scripture request,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var scripture = await dbContext.Scriptures.FindAsync([id], cancellationToken);
+    if (scripture is null)
+    {
+        return Results.NotFound();
+    }
+
+    scripture.Reference = request.Reference;
+    scripture.Text = request.Text;
+    scripture.Topic = request.Topic;
+    scripture.IsMemorized = request.IsMemorized;
+    scripture.PracticeCount = request.PracticeCount;
+    scripture.CurrentStreakDays = request.CurrentStreakDays;
+    scripture.LastPracticedAtUtc = request.LastPracticedAtUtc;
+    scripture.MemorizedAtUtc = request.MemorizedAtUtc;
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return Results.Ok(scripture);
+});
+
+app.MapDelete("/api/scriptures/{id:guid}", async (
+    Guid id,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var scripture = await dbContext.Scriptures.FindAsync([id], cancellationToken);
+    if (scripture is null)
+    {
+        return Results.NotFound();
+    }
+
+    dbContext.Scriptures.Remove(scripture);
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return Results.NoContent();
+});
+
+app.MapPost("/api/scriptures/{id:guid}/practice", async (
+    Guid id,
+    ScripturePracticeRequest request,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var scripture = await dbContext.Scriptures.FindAsync([id], cancellationToken);
+    if (scripture is null)
+    {
+        return Results.NotFound();
+    }
+
+    scripture.PracticeCount += 1;
+
+    var now = DateTime.UtcNow;
+    if (scripture.LastPracticedAtUtc.HasValue)
+    {
+        var gap = (now.Date - scripture.LastPracticedAtUtc.Value.Date).Days;
+        scripture.CurrentStreakDays = request.Succeeded
+            ? (gap == 1 ? scripture.CurrentStreakDays + 1 : 1)
+            : 0;
+    }
+    else
+    {
+        scripture.CurrentStreakDays = request.Succeeded ? 1 : 0;
+    }
+
+    scripture.LastPracticedAtUtc = now;
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return Results.Ok(scripture);
+});
+
+app.MapPost("/api/scriptures/{id:guid}/memorized", async (
+    Guid id,
+    ScriptureMemorizedRequest request,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var scripture = await dbContext.Scriptures.FindAsync([id], cancellationToken);
+    if (scripture is null)
+    {
+        return Results.NotFound();
+    }
+
+    scripture.IsMemorized = request.IsMemorized;
+    scripture.MemorizedAtUtc = request.IsMemorized ? DateTime.UtcNow : null;
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return Results.Ok(scripture);
+});
+
+app.MapPost("/api/pages", async (
     CreatePageRequest request,
     HttpContext httpContext,
     VerseVaultDbContext dbContext,
@@ -165,7 +319,7 @@ app.MapPost("/api/scriptures", async (
     }
 }).RequireAuthorization();
 
-app.MapGet("/api/scriptures", async (
+app.MapGet("/api/pages", async (
     HttpContext httpContext,
     VerseVaultDbContext dbContext,
     CancellationToken cancellationToken) =>

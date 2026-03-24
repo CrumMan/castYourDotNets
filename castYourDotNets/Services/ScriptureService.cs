@@ -1,120 +1,109 @@
+using System.Net;
+using System.Net.Http.Json;
+using castYourDotNets.Contracts;
 using castYourDotNets.Models;
+using Microsoft.AspNetCore.Components;
 
 namespace castYourDotNets.Services;
 
 public class ScriptureService
 {
-    private readonly List<Scripture> scriptures =
-    [
-        new Scripture
-        {
-            Reference = "Mosiah 2:17",
-            Text = "When ye are in the service of your fellow beings ye are only in the service of your God.",
-            Topic = "Service"
-        }
-    ];
+    private readonly HttpClient httpClient;
 
-    public IReadOnlyList<Scripture> GetAll()
+    public ScriptureService(IHttpClientFactory httpClientFactory, NavigationManager navigationManager)
     {
+        httpClient = httpClientFactory.CreateClient(nameof(ScriptureService));
+        httpClient.BaseAddress = new Uri(navigationManager.BaseUri);
+    }
+
+    public async Task<IReadOnlyList<Scripture>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await httpClient.GetFromJsonAsync<List<Scripture>>("api/scriptures", cancellationToken) ?? [];
+    }
+
+    public async Task<Scripture?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.GetAsync($"api/scriptures/{id}", cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Scripture>(cancellationToken);
+    }
+
+    public async Task<Scripture?> GetNextPracticeTargetAsync(CancellationToken cancellationToken = default)
+    {
+        var scriptures = await GetAllAsync(cancellationToken);
         return scriptures
-            .OrderBy(s => s.Reference)
-            .ToList();
+            .Where(scripture => !scripture.IsMemorized)
+            .OrderBy(scripture => scripture.LastPracticedAtUtc ?? DateTime.MinValue)
+            .ThenBy(scripture => scripture.Reference)
+            .FirstOrDefault()
+            ?? scriptures.FirstOrDefault();
     }
 
-    public Scripture? GetById(Guid id)
+    public async Task AddAsync(Scripture scripture, CancellationToken cancellationToken = default)
     {
-        return scriptures.FirstOrDefault(s => s.Id == id);
+        var response = await httpClient.PostAsJsonAsync("api/scriptures", scripture, cancellationToken);
+        response.EnsureSuccessStatusCode();
     }
 
-    public Scripture? GetNextPracticeTarget()
+    public async Task<bool> UpdateAsync(Scripture updatedScripture, CancellationToken cancellationToken = default)
     {
-        return scriptures
-            .Where(s => !s.IsMemorized)
-            .OrderBy(s => s.LastPracticedAtUtc ?? DateTime.MinValue)
-            .ThenBy(s => s.Reference)
-            .FirstOrDefault();
-    }
-
-    public bool RecordPractice(Guid id, bool succeeded)
-    {
-        var scripture = GetById(id);
-        if (scripture is null)
+        var response = await httpClient.PutAsJsonAsync(
+            $"api/scriptures/{updatedScripture.Id}",
+            updatedScripture,
+            cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
 
-        scripture.PracticeCount += 1;
-
-        var now = DateTime.UtcNow;
-        if (scripture.LastPracticedAtUtc.HasValue)
-        {
-            var gap = (now.Date - scripture.LastPracticedAtUtc.Value.Date).Days;
-            if (succeeded)
-            {
-                scripture.CurrentStreakDays = gap == 1 ? scripture.CurrentStreakDays + 1 : 1;
-            }
-            else
-            {
-                scripture.CurrentStreakDays = 0;
-            }
-        }
-        else
-        {
-            scripture.CurrentStreakDays = succeeded ? 1 : 0;
-        }
-
-        scripture.LastPracticedAtUtc = now;
+        response.EnsureSuccessStatusCode();
         return true;
     }
 
-    public bool SetMemorized(Guid id, bool isMemorized)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var scripture = GetById(id);
-        if (scripture is null)
+        var response = await httpClient.DeleteAsync($"api/scriptures/{id}", cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
 
-        scripture.IsMemorized = isMemorized;
-        scripture.MemorizedAtUtc = isMemorized ? DateTime.UtcNow : null;
+        response.EnsureSuccessStatusCode();
         return true;
     }
 
-    public void Add(Scripture scripture)
+    public async Task<bool> RecordPracticeAsync(Guid id, bool succeeded, CancellationToken cancellationToken = default)
     {
-        scripture.Id = Guid.NewGuid();
-        scripture.CreatedAtUtc = DateTime.UtcNow;
-        scriptures.Add(scripture);
-    }
-
-    public bool Update(Scripture updatedScripture)
-    {
-        var existing = scriptures.FirstOrDefault(s => s.Id == updatedScripture.Id);
-        if (existing is null)
+        var response = await httpClient.PostAsJsonAsync(
+            $"api/scriptures/{id}/practice",
+            new ScripturePracticeRequest { Succeeded = succeeded },
+            cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
 
-        existing.Reference = updatedScripture.Reference;
-        existing.Text = updatedScripture.Text;
-        existing.Topic = updatedScripture.Topic;
-        existing.IsMemorized = updatedScripture.IsMemorized;
-        existing.PracticeCount = updatedScripture.PracticeCount;
-        existing.CurrentStreakDays = updatedScripture.CurrentStreakDays;
-        existing.LastPracticedAtUtc = updatedScripture.LastPracticedAtUtc;
-        existing.MemorizedAtUtc = updatedScripture.MemorizedAtUtc;
+        response.EnsureSuccessStatusCode();
         return true;
     }
 
-    public bool Delete(Guid id)
+    public async Task<bool> SetMemorizedAsync(Guid id, bool isMemorized, CancellationToken cancellationToken = default)
     {
-        var existing = scriptures.FirstOrDefault(s => s.Id == id);
-        if (existing is null)
+        var response = await httpClient.PostAsJsonAsync(
+            $"api/scriptures/{id}/memorized",
+            new ScriptureMemorizedRequest { IsMemorized = isMemorized },
+            cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
 
-        scriptures.Remove(existing);
+        response.EnsureSuccessStatusCode();
         return true;
     }
 }

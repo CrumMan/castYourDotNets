@@ -60,19 +60,19 @@ else
     private int practicedCount;
     private int totalPracticeCount;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        Refresh();
+        await RefreshAsync();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        Refresh();
+        await RefreshAsync();
     }
 
-    private void Refresh()
+    private async Task RefreshAsync()
     {
-        scriptures = ScriptureService.GetAll().ToList();
+        scriptures = (await ScriptureService.GetAllAsync()).ToList();
         totalScriptures = scriptures.Count;
         memorizedCount = scriptures.Count(s => s.IsMemorized);
         practicedCount = scriptures.Count(s => s.PracticeCount > 0);

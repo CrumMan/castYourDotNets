@@ -76,25 +76,25 @@
     private Scripture currentScripture = new();
     private bool isEditing;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        RefreshScriptures();
+        await RefreshScripturesAsync();
     }
 
-    private void SaveScripture()
+    private async Task SaveScripture()
     {
         if (isEditing)
         {
-            ScriptureService.Update(currentScripture);
+            await ScriptureService.UpdateAsync(currentScripture);
             isEditing = false;
         }
         else
         {
-            ScriptureService.Add(currentScripture);
+            await ScriptureService.AddAsync(currentScripture);
         }
 
         currentScripture = new Scripture();
-        RefreshScriptures();
+        await RefreshScripturesAsync();
     }
 
     private void StartEdit(Scripture scripture)
@@ -121,20 +121,20 @@
         currentScripture = new Scripture();
     }
 
-    private void DeleteScripture(Guid id)
+    private async Task DeleteScripture(Guid id)
     {
-        ScriptureService.Delete(id);
+        await ScriptureService.DeleteAsync(id);
 
         if (isEditing && currentScripture.Id == id)
         {
             CancelEdit();
         }
 
-        RefreshScriptures();
+        await RefreshScripturesAsync();
     }
 
-    private void RefreshScriptures()
+    private async Task RefreshScripturesAsync()
     {
-        scriptures = ScriptureService.GetAll().ToList();
+        scriptures = (await ScriptureService.GetAllAsync()).ToList();
     }
 }

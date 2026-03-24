@@ -39,7 +39,7 @@ else
             <button type="button" class="btn" @onclick="ToggleMemorized">
                 @(currentScripture.IsMemorized ? "Mark Unmemorized" : "Mark Memorized")
             </button>
-            <button type="button" class="btn" @onclick="LoadNext">Next Verse</button>
+            <button type="button" class="btn" @onclick="LoadNextAsync">Next Verse</button>
         </div>
 
         @if (!string.IsNullOrWhiteSpace(feedback))
@@ -54,9 +54,9 @@ else
     private bool showText;
     private string feedback = string.Empty;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        LoadNext();
+        await LoadNextAsync();
     }
 
     private void RevealText()
@@ -64,47 +64,47 @@ else
         showText = true;
     }
 
-    private void MarkSuccess()
+    private async Task MarkSuccess()
     {
         if (currentScripture is null)
         {
             return;
         }
 
-        ScriptureService.RecordPractice(currentScripture.Id, succeeded: true);
-        currentScripture = ScriptureService.GetById(currentScripture.Id);
+        await ScriptureService.RecordPracticeAsync(currentScripture.Id, succeeded: true);
+        currentScripture = await ScriptureService.GetByIdAsync(currentScripture.Id);
         feedback = "Great work. Recorded as a successful practice.";
     }
 
-    private void MarkNeedsWork()
+    private async Task MarkNeedsWork()
     {
         if (currentScripture is null)
         {
             return;
         }
 
-        ScriptureService.RecordPractice(currentScripture.Id, succeeded: false);
-        currentScripture = ScriptureService.GetById(currentScripture.Id);
+        await ScriptureService.RecordPracticeAsync(currentScripture.Id, succeeded: false);
+        currentScripture = await ScriptureService.GetByIdAsync(currentScripture.Id);
         feedback = "Recorded. Keep practicing this one.";
     }
 
-    private void ToggleMemorized()
+    private async Task ToggleMemorized()
     {
         if (currentScripture is null)
         {
             return;
         }
 
-        ScriptureService.SetMemorized(currentScripture.Id, !currentScripture.IsMemorized);
-        currentScripture = ScriptureService.GetById(currentScripture.Id);
+        await ScriptureService.SetMemorizedAsync(currentScripture.Id, !currentScripture.IsMemorized);
+        currentScripture = await ScriptureService.GetByIdAsync(currentScripture.Id);
         feedback = currentScripture?.IsMemorized == true
             ? "Marked as memorized."
             : "Marked as not memorized.";
     }
 
-    private void LoadNext()
+    private async Task LoadNextAsync()
     {
-        currentScripture = ScriptureService.GetNextPracticeTarget() ?? ScriptureService.GetAll().FirstOrDefault();
+        currentScripture = await ScriptureService.GetNextPracticeTargetAsync();
         showText = false;
         feedback = string.Empty;
     }

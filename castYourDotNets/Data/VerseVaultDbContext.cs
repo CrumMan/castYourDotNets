@@ -14,6 +14,8 @@ public sealed class VerseVaultDbContext : DbContext
 
     public DbSet<PageClass> PageClasses => Set<PageClass>();
 
+    public DbSet<Scripture> Scriptures => Set<Scripture>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserAccount>(entity =>
@@ -38,6 +40,14 @@ public sealed class VerseVaultDbContext : DbContext
                 .WithMany(user => user.PageClasses)
                 .HasForeignKey(page => page.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Scripture>(entity =>
+        {
+            entity.HasKey(scripture => scripture.Id);
+            entity.Property(scripture => scripture.Reference).IsRequired().HasMaxLength(150);
+            entity.Property(scripture => scripture.Text).IsRequired().HasMaxLength(2000);
+            entity.Property(scripture => scripture.Topic).HasMaxLength(120);
         });
     }
 }
