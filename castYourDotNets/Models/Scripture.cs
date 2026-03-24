@@ -18,4 +18,14 @@ public class Scripture
     public string Topic { get; set; } = string.Empty;
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    public bool IsMemorized { get; set; }
+
+    public int PracticeCount { get; set; }
+
+    public int CurrentStreakDays { get; set; }
+
+    public DateTime? LastPracticedAtUtc { get; set; }
+
+    public DateTime? MemorizedAtUtc { get; set; }
 }

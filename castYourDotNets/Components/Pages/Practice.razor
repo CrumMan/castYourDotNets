@@ -1,6 +1,111 @@
 @page "/practice"
+@inject ScriptureService ScriptureService
 
 <PageTitle>Practice</PageTitle>
 
 <h1>Practice</h1>
-<p>This page will host memorization and recall practice experiences.</p>
+
+@if (currentScripture is null)
+{
+    <section class="card">
+        <p>No scriptures available for practice. Add one in the Scriptures page.</p>
+    </section>
+}
+else
+{
+    <section class="card practice-card">
+        <p class="scripture-reference">@currentScripture.Reference</p>
+
+        @if (!string.IsNullOrWhiteSpace(currentScripture.Topic))
+        {
+            <p class="scripture-topic">Topic: @currentScripture.Topic</p>
+        }
+
+        <div class="practice-text">
+            @if (showText)
+            {
+                <p>@currentScripture.Text</p>
+            }
+            else
+            {
+                <p>Try to recite this verse from memory, then reveal text to self-check.</p>
+            }
+        </div>
+
+        <div class="button-row">
+            <button type="button" class="btn" @onclick="RevealText">Reveal Text</button>
+            <button type="button" class="btn primary" @onclick="MarkSuccess">I Got It</button>
+            <button type="button" class="btn danger" @onclick="MarkNeedsWork">Need Work</button>
+            <button type="button" class="btn" @onclick="ToggleMemorized">
+                @(currentScripture.IsMemorized ? "Mark Unmemorized" : "Mark Memorized")
+            </button>
+            <button type="button" class="btn" @onclick="LoadNext">Next Verse</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(feedback))
+        {
+            <p class="practice-feedback">@feedback</p>
+        }
+    </section>
+}
+
+@code {
+    private Scripture? currentScripture;
+    private bool showText;
+    private string feedback = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        LoadNext();
+    }
+
+    private void RevealText()
+    {
+        showText = true;
+    }
+
+    private void MarkSuccess()
+    {
+        if (currentScripture is null)
+        {
+            return;
+        }
+
+        ScriptureService.RecordPractice(currentScripture.Id, succeeded: true);
+        currentScripture = ScriptureService.GetById(currentScripture.Id);
+        feedback = "Great work. Recorded as a successful practice.";
+    }
+
+    private void MarkNeedsWork()
+    {
+        if (currentScripture is null)
+        {
+            return;
+        }
+
+        ScriptureService.RecordPractice(currentScripture.Id, succeeded: false);
+        currentScripture = ScriptureService.GetById(currentScripture.Id);
+        feedback = "Recorded. Keep practicing this one.";
+    }
+
+    private void ToggleMemorized()
+    {
+        if (currentScripture is null)
+        {
+            return;
+        }
+
+        ScriptureService.SetMemorized(currentScripture.Id, !currentScripture.IsMemorized);
+        currentScripture = ScriptureService.GetById(currentScripture.Id);
+        feedback = currentScripture?.IsMemorized == true
+            ? "Marked as memorized."
+            : "Marked as not memorized.";
+    }
+
+    private void LoadNext()
+    {
+        currentScripture = ScriptureService.GetNextPracticeTarget() ?? ScriptureService.GetAll().FirstOrDefault();
+        showText = false;
+        feedback = string.Empty;
+    }
+}

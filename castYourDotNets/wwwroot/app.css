@@ -142,6 +142,46 @@ h2 {
   color: #4b5563;
 }
 
+.practice-card {
+  max-width: 760px;
+}
+
+.practice-text {
+  margin: 0.8rem 0 1rem;
+  padding: 0.8rem;
+  background: #f9fafb;
+  border-radius: 0.4rem;
+  border: 1px solid #e5e7eb;
+}
+
+.practice-feedback {
+  margin-top: 0.8rem;
+  font-weight: 600;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-card {
+  text-align: center;
+}
+
+.stat-label {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  margin: 0.4rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
 @media (max-width: 800px) {
   .app-layout {
     grid-template-columns: 1fr;
@@ -153,5 +193,9 @@ h2 {
 
   .scriptures-grid {
     grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
