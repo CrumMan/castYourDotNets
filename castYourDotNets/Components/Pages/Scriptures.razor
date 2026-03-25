@@ -1,0 +1,140 @@
+@page "/scriptures"
+@inject ScriptureService ScriptureService
+
+<PageTitle>Scriptures</PageTitle>
+
+<h1>Scriptures</h1>
+
+<div class="scriptures-grid">
+    <section class="card">
+        <h2>@(isEditing ? "Edit Scripture" : "Add Scripture")</h2>
+
+        <EditForm Model="currentScripture" OnValidSubmit="SaveScripture">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-field">
+                <label for="reference">Reference</label>
+                <InputText id="reference" class="input" @bind-Value="currentScripture.Reference" />
+            </div>
+
+            <div class="form-field">
+                <label for="text">Text</label>
+                <InputTextArea id="text" class="input textarea" @bind-Value="currentScripture.Text" />
+            </div>
+
+            <div class="form-field">
+                <label for="topic">Topic</label>
+                <InputText id="topic" class="input" @bind-Value="currentScripture.Topic" />
+            </div>
+
+            <div class="button-row">
+                <button type="submit" class="btn primary">@(isEditing ? "Update" : "Add")</button>
+                @if (isEditing)
+                {
+                    <button type="button" class="btn" @onclick="CancelEdit">Cancel</button>
+                }
+            </div>
+        </EditForm>
+    </section>
+
+    <section class="card">
+        <h2>Saved Scriptures</h2>
+
+        @if (scriptures.Count == 0)
+        {
+            <p>No scriptures saved yet.</p>
+        }
+        else
+        {
+            <ul class="scripture-list">
+                @foreach (var scripture in scriptures)
+                {
+                    <li class="scripture-item">
+                        <div>
+                            <p class="scripture-reference">@scripture.Reference</p>
+                            <p>@scripture.Text</p>
+                            @if (!string.IsNullOrWhiteSpace(scripture.Topic))
+                            {
+                                <p class="scripture-topic">Topic: @scripture.Topic</p>
+                            }
+                        </div>
+                        <div class="button-row">
+                            <button type="button" class="btn" @onclick="() => StartEdit(scripture)">Edit</button>
+                            <button type="button" class="btn danger"
+                                    @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>
+
+@code {
+    private List<Scripture> scriptures = [];
+    private Scripture currentScripture = new();
+    private bool isEditing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshScripturesAsync();
+    }
+
+    private async Task SaveScripture()
+    {
+        if (isEditing)
+        {
+            await ScriptureService.UpdateAsync(currentScripture);
+            isEditing = false;
+        }
+        else
+        {
+            await ScriptureService.AddAsync(currentScripture);
+        }
+
+        currentScripture = new Scripture();
+        await RefreshScripturesAsync();
+    }
+
+    private void StartEdit(Scripture scripture)
+    {
+        currentScripture = new Scripture
+        {
+            Id = scripture.Id,
+            Reference = scripture.Reference,
+            Text = scripture.Text,
+            Topic = scripture.Topic,
+            CreatedAtUtc = scripture.CreatedAtUtc,
+            IsMemorized = scripture.IsMemorized,
+            PracticeCount = scripture.PracticeCount,
+            CurrentStreakDays = scripture.CurrentStreakDays,
+            LastPracticedAtUtc = scripture.LastPracticedAtUtc,
+            MemorizedAtUtc = scripture.MemorizedAtUtc
+        };
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+        currentScripture = new Scripture();
+    }
+
+    private async Task DeleteScripture(Guid id)
+    {
+        await ScriptureService.DeleteAsync(id);
+
+        if (isEditing && currentScripture.Id == id)
+        {
+            CancelEdit();
+        }
+
+        await RefreshScripturesAsync();
+    }
+
+    private async Task RefreshScripturesAsync()
+    {
+        scriptures = (await ScriptureService.GetAllAsync()).ToList();
+    }
+}

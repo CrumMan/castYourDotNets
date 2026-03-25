@@ -1,0 +1,81 @@
+@page "/progress"
+@inject ScriptureService ScriptureService
+
+<PageTitle>Progress</PageTitle>
+
+<h1>Progress</h1>
+
+@if (scriptures.Count == 0)
+{
+    <section class="card">
+        <p>No data yet. Add scriptures to start tracking progress.</p>
+    </section>
+}
+else
+{
+    <section class="stats-grid">
+        <article class="card stat-card">
+            <p class="stat-label">Total Scriptures</p>
+            <p class="stat-value">@totalScriptures</p>
+        </article>
+        <article class="card stat-card">
+            <p class="stat-label">Memorized</p>
+            <p class="stat-value">@memorizedCount</p>
+        </article>
+        <article class="card stat-card">
+            <p class="stat-label">Practiced</p>
+            <p class="stat-value">@practicedCount</p>
+        </article>
+        <article class="card stat-card">
+            <p class="stat-label">Total Practice Attempts</p>
+            <p class="stat-value">@totalPracticeCount</p>
+        </article>
+    </section>
+
+    <section class="card">
+        <h2>Scripture Status</h2>
+        <ul class="scripture-list">
+            @foreach (var scripture in scriptures.OrderByDescending(s => s.PracticeCount).ThenBy(s => s.Reference))
+            {
+                <li class="scripture-item">
+                    <div>
+                        <p class="scripture-reference">@scripture.Reference</p>
+                        <p class="scripture-topic">Attempts: @scripture.PracticeCount</p>
+                        <p class="scripture-topic">Current Streak: @scripture.CurrentStreakDays day(s)</p>
+                        <p class="scripture-topic">
+                            Status: @(scripture.IsMemorized ? "Memorized" : "In Progress")
+                        </p>
+                    </div>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
+@code {
+    private List<Scripture> scriptures = [];
+
+    private int totalScriptures;
+    private int memorizedCount;
+    private int practicedCount;
+    private int totalPracticeCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        scriptures = (await ScriptureService.GetAllAsync()).ToList();
+        totalScriptures = scriptures.Count;
+        memorizedCount = scriptures.Count(s => s.IsMemorized);
+        practicedCount = scriptures.Count(s => s.PracticeCount > 0);
+        totalPracticeCount = scriptures.Sum(s => s.PracticeCount);
+    }
+}
