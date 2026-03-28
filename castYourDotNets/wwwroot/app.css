@@ -182,6 +182,27 @@ h2 {
   font-weight: 700;
 }
 
+.memorize-card {
+  max-width: 760px;
+}
+
+.memorize-result {
+  margin-top: 0.8rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.4rem;
+  font-weight: 600;
+}
+
+.result-correct {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.result-incorrect {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 @media (max-width: 800px) {
   .app-layout {
     grid-template-columns: 1fr;
