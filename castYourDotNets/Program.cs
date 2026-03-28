@@ -29,7 +29,8 @@ builder.Services.AddScoped<IPasswordHasher<UserAccount>, PasswordHasher<UserAcco
 builder.Services.AddScoped<AccountRegistrationService>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<TokenService>();
-builder.Services.AddRazorComponents();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 builder.Services.AddHttpClient(nameof(ScriptureService));
 builder.Services.AddScoped<ScriptureService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -98,7 +99,8 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapRazorComponents<App>();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.MapGet("/api", () => Results.Ok(new
 {
