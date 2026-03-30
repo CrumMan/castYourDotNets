@@ -16,6 +16,8 @@ public sealed class VerseVaultDbContext : DbContext
 
     public DbSet<Scripture> Scriptures => Set<Scripture>();
 
+    public DbSet<MemorizationEntry> MemorizationEntries => Set<MemorizationEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserAccount>(entity =>
@@ -48,6 +50,17 @@ public sealed class VerseVaultDbContext : DbContext
             entity.Property(scripture => scripture.Reference).IsRequired().HasMaxLength(150);
             entity.Property(scripture => scripture.Text).IsRequired().HasMaxLength(2000);
             entity.Property(scripture => scripture.Topic).HasMaxLength(120);
+        });
+
+        modelBuilder.Entity<MemorizationEntry>(entity =>
+        {
+            entity.HasKey(entry => entry.Id);
+            entity.Property(entry => entry.GameText).IsRequired().HasMaxLength(2000);
+
+            entity.HasOne(entry => entry.User)
+                .WithMany()
+                .HasForeignKey(entry => entry.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

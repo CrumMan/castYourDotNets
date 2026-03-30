@@ -1,0 +1,137 @@
+@page "/memorize"
+@rendermode InteractiveServer
+@inject ScriptureService ScriptureService
+
+<PageTitle>Memorize</PageTitle>
+
+<h1>Memorize</h1>
+
+@if (selectedScripture is null)
+{
+    <section class="card">
+        <h2>Pick a Scripture to Memorize</h2>
+
+        @if (scriptures.Count == 0)
+        {
+            <p>No scriptures available. Add some on the Scriptures page first.</p>
+        }
+        else
+        {
+            <ul class="scripture-list">
+                @foreach (var scripture in scriptures)
+                {
+                    <li class="scripture-item">
+                        <p class="scripture-reference">@scripture.Reference</p>
+                        <p>@scripture.Text</p>
+                        <div class="button-row">
+                            <button type="button" class="btn primary" @onclick="() => SelectScripture(scripture)">Memorize This</button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+}
+else
+{
+    <section class="card memorize-card">
+        <h2>@selectedScripture.Reference</h2>
+
+        @if (!gameStarted)
+        {
+            <div class="practice-text">
+                <p>@selectedScripture.Text</p>
+            </div>
+            <p>Read the scripture above, then start the game when you are ready.</p>
+            <div class="button-row">
+                <button type="button" class="btn primary" @onclick="StartGame">Start Game</button>
+                <button type="button" class="btn" @onclick="BackToList">Back</button>
+            </div>
+        }
+        else
+        {
+            <p>Type the scripture from memory:</p>
+
+            <div class="form-field">
+                <textarea class="input textarea" @bind="userAttempt" disabled="@gameChecked"></textarea>
+            </div>
+
+            <div class="button-row">
+                @if (!gameChecked)
+                {
+                    <button type="button" class="btn primary" @onclick="CheckAttempt">Check</button>
+                    <button type="button" class="btn" @onclick="StartGame">Reset</button>
+                }
+                else
+                {
+                    <button type="button" class="btn primary" @onclick="StartGame">Try Again</button>
+                    <button type="button" class="btn" @onclick="() => SelectScripture(selectedScripture)">Read Again</button>
+                }
+                <button type="button" class="btn" @onclick="BackToList">Back</button>
+            </div>
+
+            @if (gameChecked)
+            {
+                <div class="memorize-result @(isCorrect ? "result-correct" : "result-incorrect")">
+                    <p>@(isCorrect ? "You got it right!" : "Not quite. Keep practicing!")</p>
+                </div>
+            }
+        }
+    </section>
+}
+
+@code {
+    private List<Scripture> scriptures = [];
+    private Scripture? selectedScripture;
+    private bool gameStarted;
+    private bool gameChecked;
+    private bool isCorrect;
+    private string userAttempt = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        scriptures = (await ScriptureService.GetAllAsync()).ToList();
+    }
+
+    private void SelectScripture(Scripture scripture)
+    {
+        selectedScripture = scripture;
+        gameStarted = false;
+        gameChecked = false;
+        userAttempt = string.Empty;
+    }
+
+    private void StartGame()
+    {
+        gameStarted = true;
+        gameChecked = false;
+        isCorrect = false;
+        userAttempt = string.Empty;
+    }
+
+    private void CheckAttempt()
+    {
+        if (selectedScripture is null)
+        {
+            return;
+        }
+
+        var expected = NormalizeText(selectedScripture.Text);
+        var actual = NormalizeText(userAttempt);
+        isCorrect = string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase);
+        gameChecked = true;
+    }
+
+    private void BackToList()
+    {
+        selectedScripture = null;
+        gameStarted = false;
+        gameChecked = false;
+        userAttempt = string.Empty;
+    }
+
+    private static string NormalizeText(string text)
+    {
+        return text.Trim().Replace("\r\n", " ").Replace("\n", " ").Replace("  ", " ");
+    }
+}

@@ -29,7 +29,8 @@ builder.Services.AddScoped<IPasswordHasher<UserAccount>, PasswordHasher<UserAcco
 builder.Services.AddScoped<AccountRegistrationService>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<TokenService>();
-builder.Services.AddRazorComponents();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 builder.Services.AddHttpClient(nameof(ScriptureService));
 builder.Services.AddScoped<ScriptureService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -78,6 +79,18 @@ using (var scope = app.Services.CreateScope())
             MemorizedAtUtc TEXT NULL
         );
         """);
+
+    await dbContext.Database.ExecuteSqlRawAsync(
+        """
+        CREATE TABLE IF NOT EXISTS MemorizationEntries (
+            Id TEXT NOT NULL PRIMARY KEY,
+            UserId TEXT NOT NULL,
+            GameText TEXT NOT NULL,
+            IsMemorized INTEGER NOT NULL DEFAULT 0,
+            IsMemorizedThroughGame INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (UserId) REFERENCES UserAccounts(Id) ON DELETE CASCADE
+        );
+        """);
 }
 
 app.UseHttpsRedirection();
@@ -86,7 +99,8 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapRazorComponents<App>();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.MapGet("/api", () => Results.Ok(new
 {
@@ -319,6 +333,37 @@ app.MapPost("/api/pages", async (
     }
 }).RequireAuthorization();
 
+app.MapPost("/api/memorization", async (
+    CreateMemorizationEntryRequest request,
+    HttpContext httpContext,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var userId = httpContext.User.GetRequiredUserId();
+
+    var entry = new MemorizationEntry
+    {
+        UserId = userId,
+        GameText = request.GameText,
+        IsMemorized = request.IsMemorized,
+        IsMemorizedThroughGame = request.IsMemorizedThroughGame
+    };
+
+    dbContext.MemorizationEntries.Add(entry);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    return Results.Created($"/api/memorization/{entry.Id}", ToMemorizationEntryResponse(entry));
+}).RequireAuthorization();
+
+app.MapGet("/api/memorization/scripture/{id:guid}", async (
+    Guid id,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var scripture = await dbContext.Scriptures.FindAsync([id], cancellationToken);
+    return scripture is null ? Results.NotFound() : Results.Ok(scripture);
+}).RequireAuthorization();
+
 app.MapGet("/api/pages", async (
     HttpContext httpContext,
     VerseVaultDbContext dbContext,
@@ -355,4 +400,14 @@ static PageResponse ToPageResponse(PageClass page) =>
         MemorizedAtUtc = page.MemorizedAtUtc,
         ReviewStreakDays = page.ReviewStreakDays,
         LastReviewedAtUtc = page.LastReviewedAtUtc
+    };
+
+static MemorizationEntryResponse ToMemorizationEntryResponse(MemorizationEntry entry) =>
+    new()
+    {
+        Id = entry.Id,
+        UserId = entry.UserId,
+        GameText = entry.GameText,
+        IsMemorized = entry.IsMemorized,
+        IsMemorizedThroughGame = entry.IsMemorizedThroughGame
     };
