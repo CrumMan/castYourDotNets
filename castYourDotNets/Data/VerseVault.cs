@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace castYourDotNets.Models;
-
+// this class builds the verse vault to hold an enum and anything that needs to be inserted. It creates a rigidity when building the inserts.
 public class Verse_Vault
 {
     public enum Scripture { BookOfMormon, OldTestament, NewTestament, DoctrineAndCovenants }

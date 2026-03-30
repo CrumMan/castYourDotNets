@@ -33,6 +33,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddHttpClient(nameof(ScriptureService));
 builder.Services.AddScoped<ScriptureService>();
+// build the api address to pull values for scripture
 builder.Services.AddHttpClient<ScriptureService>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:5076");
@@ -67,7 +68,8 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<VerseVaultDbContext>();
     await dbContext.Database.EnsureCreatedAsync();
-    if (!dbContext.VerseVaults.Any()) // ← only seed if empty
+    //insert the values into database. if empty
+    if (!dbContext.VerseVaults.Any())
     {
         SeedData.Initialize(dbContext);
         Console.WriteLine("Verse vault seeded successfully.");
