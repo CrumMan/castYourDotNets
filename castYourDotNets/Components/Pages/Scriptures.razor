@@ -20,7 +20,7 @@
                 <select @onchange="OnScriptureEnumChanged">
                     @foreach (var s in Enum.GetValues(typeof(Verse_Vault.Scripture)))
                     {
-                        <option value="@s">@s</option>
+                        <option value="@s">@FormatEnumDisplay(s.ToString())</option>
                     }
                 </select>
                 <label>Book</label>
@@ -127,6 +127,8 @@
                 return Regex.Replace(currentVerse.VerseText, @"[^\w\s]", "");
         }
     }
+    private string FormatEnumDisplay(string value) =>
+    Regex.Replace(value, @"(?<=[a-z])(?=[A-Z])|(?<=[a-zA-Z])(?=\d)", " ").Trim();
     protected override async Task OnInitializedAsync()
     {
         allVerses = await ScriptureService.GetAllVersesAsync();
@@ -136,16 +138,11 @@
 
     private void OnScriptureEnumChanged(ChangeEventArgs evnt)
     {
-        books = allVerses
-    .Where(v => v.scripture == selectedScriptureEnum)
-    .Select(v => v.book)
-    .Distinct()
-    .ToList();
-        if (books.Any())
+        if (Enum.TryParse<Verse_Vault.Scripture>(evnt.Value?.ToString(), out var parsed))
         {
-            selectedBook = books.First();
-            UpdateChapters(); // update chapter list based on selected book
+            selectedScriptureEnum = parsed;
         }
+        UpdateBooks();
     }
     private void UpdateBooks()
     {
@@ -153,7 +150,6 @@
             .Where(v => v.scripture == selectedScriptureEnum)
             .Select(v => v.book)
             .Distinct()
-            .OrderBy(b => b)
             .ToList();
 
         if (books.Any())
