@@ -1,3 +1,4 @@
+@using System.Text.RegularExpressions
 @page "/scriptures"
 @rendermode InteractiveServer
 @inject ScriptureService ScriptureService
@@ -59,8 +60,7 @@
 
             <div>
                 <label>Text</label><br />
-                <textarea value={@currentVerse.VerseText}
-                          readonly> @(currentVerse != null ? currentVerse.VerseText : "") </textarea>
+                <textarea value="@CleanVerseText" readonly> </textarea>
             </div>
 
             
@@ -117,7 +117,16 @@
     private List<Scripture> scriptures = [];
     private Scripture currentScripture = new();
     private bool isEditing;
-
+    private string CleanVerseText
+    {
+        get
+        {
+            if (currentVerse?.VerseText == null)
+                return "";
+            else
+                return Regex.Replace(currentVerse.VerseText, @"[^\w\s]", "");
+        }
+    }
     protected override async Task OnInitializedAsync()
     {
         allVerses = await ScriptureService.GetAllVersesAsync();
@@ -188,6 +197,7 @@
             v.book == selectedBook &&
             v.Chapter.ToString() == selectedChapter &&
             v.VerseInt == selectedVerse);
+
     }
 
 
