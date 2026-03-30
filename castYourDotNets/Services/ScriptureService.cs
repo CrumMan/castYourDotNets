@@ -9,13 +9,21 @@ namespace castYourDotNets.Services;
 public class ScriptureService
 {
     private readonly HttpClient httpClient;
+    private readonly HttpClient _http;
 
-    public ScriptureService(IHttpClientFactory httpClientFactory, NavigationManager navigationManager)
+
+    public ScriptureService(IHttpClientFactory httpClientFactory, NavigationManager navigationManager, HttpClient http)
     {
         httpClient = httpClientFactory.CreateClient(nameof(ScriptureService));
         httpClient.BaseAddress = new Uri(navigationManager.BaseUri);
+        _http = http;
     }
 
+    public async Task<List<Verse_Vault>> GetAllVersesAsync()
+    {
+        return await _http.GetFromJsonAsync<List<Verse_Vault>>("/api/versevault")
+               ?? new List<Verse_Vault>();
+    }
     public async Task<IReadOnlyList<Scripture>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await httpClient.GetFromJsonAsync<List<Scripture>>("api/scriptures", cancellationToken) ?? [];
