@@ -1,2 +1,6 @@
 bin 
 obj
+Data/book-of-mormon.json
+Data/new-testament.json
+Data/old-testament.json
+Data/doctrine-and-coveants.json

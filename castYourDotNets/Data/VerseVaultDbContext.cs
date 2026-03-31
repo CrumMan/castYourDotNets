@@ -17,6 +17,7 @@ public sealed class VerseVaultDbContext : DbContext
     public DbSet<Scripture> Scriptures => Set<Scripture>();
 
     public DbSet<MemorizationEntry> MemorizationEntries => Set<MemorizationEntry>();
+    public DbSet<Verse_Vault> VerseVaults => Set<Verse_Vault>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,16 @@ public sealed class VerseVaultDbContext : DbContext
                 .WithMany(user => user.PageClasses)
                 .HasForeignKey(page => page.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Verse_Vault>(entity =>
+        {
+            entity.HasKey(verse_vault => verse_vault.id);
+            entity.Property(verse_vault => verse_vault.Verse_Refrence).IsRequired().HasMaxLength(150);
+            entity.Property(verse_vault => verse_vault.book).IsRequired().HasMaxLength(20);
+            entity.Property(verse_vault => verse_vault.VerseText).IsRequired().HasMaxLength(2000);
+            entity.Property(verse_vault => verse_vault.Chapter).IsRequired();
+            entity.Property(verse_vault => verse_vault.VerseInt).IsRequired();
         });
 
         modelBuilder.Entity<Scripture>(entity =>

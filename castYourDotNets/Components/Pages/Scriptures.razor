@@ -1,3 +1,4 @@
+@using System.Text.RegularExpressions
 @page "/scriptures"
 @rendermode InteractiveServer
 @inject ScriptureService ScriptureService
@@ -14,28 +15,55 @@
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <div class="form-field">
-                <label for="reference">Reference</label>
-                <InputText id="reference" class="input" @bind-Value="currentScripture.Reference" />
+            <div>
+                <label>Scripture</label>
+                <select @onchange="OnScriptureEnumChanged">
+                    @foreach (var s in Enum.GetValues(typeof(Verse_Vault.Scripture)))
+                    {
+                        <option value="@s">@FormatEnumDisplay(s.ToString())</option>
+                    }
+                </select>
+                <label>Book</label>
+                <select @onchange="e => { selectedBook = e.Value.ToString(); UpdateChapters(); }">
+                    @if (books != null && books.Any())
+                    {
+                        @foreach (var book in books)
+                        {
+                            <option value="@book">@book</option>
+                        }
+                    }
+                </select>
             </div>
 
-            <div class="form-field">
-                <label for="text">Text</label>
-                <InputTextArea id="text" class="input textarea" @bind-Value="currentScripture.Text" />
+            <div>
+                <label>Chapter</label>
+                <select @onchange="e => { selectedChapter = e.Value.ToString(); UpdateVerses(); }">
+                    @if (chapters != null && chapters.Any())
+                    {
+                        @foreach (var chap in chapters)
+                        {
+                            <option value="@chap">@chap</option>
+                        }
+                    }
+                </select>
+                <label>:</label>
+                <select @onchange="e => { selectedVerse = int.Parse(e.Value.ToString()); LoadSelectedVerse(); }">
+                    @if (verses != null && verses.Any())
+                    {
+                        @foreach (var v in verses)
+                        {
+                            <option value="@v">@v</option>
+                        }
+                    }
+                </select>
             </div>
 
-            <div class="form-field">
-                <label for="topic">Topic</label>
-                <InputText id="topic" class="input" @bind-Value="currentScripture.Topic" />
+            <div>
+                <label>Text</label><br />
+                <textarea value="@CleanVerseText" readonly> </textarea>
             </div>
 
-            <div class="button-row">
-                <button type="submit" class="btn primary">@(isEditing ? "Update" : "Add")</button>
-                @if (isEditing)
-                {
-                    <button type="button" class="btn" @onclick="CancelEdit">Cancel</button>
-                }
-            </div>
+            
         </EditForm>
     </section>
 
@@ -73,14 +101,102 @@
 </div>
 
 @code {
+    private List<Verse_Vault> allVerses = new();
+    private List<string> books = new();
+    private List<string> chapters = new();
+    private List<int> verses = new();
+
+    private Verse_Vault.Scripture? selectedScriptureEnum;
+    private string selectedBook;
+    private string selectedChapter;
+    private int selectedVerse;
+
+    private Verse_Vault currentVerse;
+
+    
     private List<Scripture> scriptures = [];
     private Scripture currentScripture = new();
     private bool isEditing;
-
+    private string CleanVerseText
+    {
+        get
+        {
+            if (currentVerse?.VerseText == null)
+                return "";
+            else
+                return Regex.Replace(currentVerse.VerseText, @"[^\w\s]", "");
+        }
+    }
+    private string FormatEnumDisplay(string value) =>
+    Regex.Replace(value, @"(?<=[a-z])(?=[A-Z])|(?<=[a-zA-Z])(?=\d)", " ").Trim();
     protected override async Task OnInitializedAsync()
     {
-        await RefreshScripturesAsync();
+        allVerses = await ScriptureService.GetAllVersesAsync();
+        selectedScriptureEnum = Verse_Vault.Scripture.BookOfMormon;
+        UpdateBooks();
     }
+
+    private void OnScriptureEnumChanged(ChangeEventArgs evnt)
+    {
+        if (Enum.TryParse<Verse_Vault.Scripture>(evnt.Value?.ToString(), out var parsed))
+        {
+            selectedScriptureEnum = parsed;
+        }
+        UpdateBooks();
+    }
+    private void UpdateBooks()
+    {
+        books = allVerses
+            .Where(v => v.scripture == selectedScriptureEnum)
+            .Select(v => v.book)
+            .Distinct()
+            .ToList();
+
+        if (books.Any())
+        {
+            selectedBook = books.First();
+            UpdateChapters();
+        }
+    }
+    private void UpdateChapters()
+    {
+        chapters = allVerses
+        .Where(v => v.scripture == selectedScriptureEnum && v.book == selectedBook)
+        .Select(v => v.Chapter.ToString())
+        .Distinct()
+        .OrderBy(c => int.Parse(c))
+        .ToList();
+
+        selectedChapter = chapters.FirstOrDefault() ?? "NA";
+        UpdateVerses();
+    }
+
+    private void UpdateVerses()
+    {
+        verses = allVerses
+            .Where(v => v.scripture == selectedScriptureEnum
+                     && v.book == selectedBook
+                     && v.Chapter.ToString() == selectedChapter)
+            .Select(v => v.VerseInt)
+            .OrderBy(v => v)
+            .ToList();
+
+        selectedVerse = verses.FirstOrDefault();
+        LoadSelectedVerse();
+    }
+
+
+    private void LoadSelectedVerse()
+    {
+        currentVerse = allVerses.FirstOrDefault(v =>
+            v.scripture == selectedScriptureEnum &&
+            v.book == selectedBook &&
+            v.Chapter.ToString() == selectedChapter &&
+            v.VerseInt == selectedVerse);
+
+    }
+
+
 
     private async Task SaveScripture()
     {

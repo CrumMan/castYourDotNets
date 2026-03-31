@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-
+using castYourDotNets;
 var builder = WebApplication.CreateBuilder(args);
 
 // Fail fast if JWT settings are missing.
@@ -33,6 +33,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddHttpClient(nameof(ScriptureService));
 builder.Services.AddScoped<ScriptureService>();
+// build the api address to pull values for scripture
+builder.Services.AddHttpClient<ScriptureService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5076");
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -63,6 +68,25 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<VerseVaultDbContext>();
     await dbContext.Database.EnsureCreatedAsync();
+    //insert the values into database. if empty
+    if (!dbContext.VerseVaults.Any())
+    {
+        SeedData.Initialize(dbContext);
+        Console.WriteLine("Verse vault seeded successfully.");
+    }
+    // creating the local schema have a database for the uneditable (after inital seed) of scripture_verses
+    await dbContext.Database.ExecuteSqlRawAsync(
+            """
+        CREATE TABLE IF NOT EXISTS Scripture_Verses (
+            Id TEXT NOT NULL PRIMARY KEY,
+            Scripture TEXT NOT NULL,
+            Book TEXT NOT NULL,
+            Chapter INT NOT NULL,
+            VerseInt INT NOT NULL,
+            VerseText TEXT NOT NULL
+        );
+        """);
+
 
     await dbContext.Database.ExecuteSqlRawAsync(
         """
@@ -380,6 +404,23 @@ app.MapGet("/api/pages", async (
         .Select(ToPageResponse));
 }).RequireAuthorization();
 
+app.MapGet("/debug/verses", async (VerseVaultDbContext db) =>
+{
+    var count = await db.VerseVaults.CountAsync();
+    return Results.Ok(new { verseCount = count });
+});
+app.MapGet("/api/versevault", async (VerseVaultDbContext dbContext) =>
+{
+    var allVerses = await dbContext.VerseVaults
+        .OrderBy(v => v.scripture)
+        .ThenBy(v => v.book)
+        .ThenBy(v => v.Chapter)
+        .ThenBy(v => v.VerseInt)
+        .ToListAsync();
+
+    return Results.Ok(allVerses);
+});
+
 app.Run();
 
 static PageResponse ToPageResponse(PageClass page) =>
@@ -411,3 +452,4 @@ static MemorizationEntryResponse ToMemorizationEntryResponse(MemorizationEntry e
         IsMemorized = entry.IsMemorized,
         IsMemorizedThroughGame = entry.IsMemorizedThroughGame
     };
+
