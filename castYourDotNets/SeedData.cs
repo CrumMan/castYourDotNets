@@ -37,16 +37,16 @@ public static class SeedData
                 }
                 if (!File.Exists(datapath))
                 {
-                    System.Console.WriteLine($"error finding {datapath}");
-                    return;
+                    System.Console.WriteLine($"Skipping {datapath} (file not found)");
+                    continue;
                 }
                 string json = File.ReadAllText(datapath);
 
                 var data = JsonSerializer.Deserialize<ScriptureRoot>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (data == null || (data.sections == null && data.books == null))
                 {
-                    System.Console.WriteLine($"data for {datapath} is null");
-                    return;
+                    System.Console.WriteLine($"Skipping {datapath} (no data)");
+                    continue;
                 }
                 if (scripture_book == Verse_Vault.Scripture.DoctrineAndCovenants)
                 {
