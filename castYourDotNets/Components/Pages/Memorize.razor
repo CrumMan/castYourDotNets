@@ -70,12 +70,18 @@ else
                 <button type="button" class="btn" @onclick="BackToList">Back</button>
             </div>
 
-            @if (gameChecked)
-            {
-                <div class="memorize-result @(isCorrect ? "result-correct" : "result-incorrect")">
-                    <p>@(isCorrect ? "You got it right!" : "Not quite. Keep practicing!")</p>
-                </div>
-            }
+          @if (gameChecked)
+{
+    <div class="memorize-result @(isCorrect ? "result-correct" : "result-incorrect")">
+        <p>@(isCorrect ? "You got it right!" : "Not quite. Keep practicing!")</p>
+        @if (isCorrect)
+        {
+            <button type="button" class="btn primary" @onclick="AddToMemorizedList">
+                Add to Memorized List
+            </button>
+        }
+    </div>
+}
         }
     </section>
 }
@@ -121,6 +127,12 @@ else
         isCorrect = string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase);
         gameChecked = true;
     }
+    private async Task AddToMemorizedList()
+{
+    if (selectedScripture is null) return;
+    await ScriptureService.SetMemorizedAsync(selectedScripture.Id, true);
+    selectedScripture.IsMemorized = true;
+}
 
     private void BackToList()
     {
