@@ -11,11 +11,20 @@ public class Scripture
     public string Reference { get; set; } = string.Empty;
 
     [Required]
+    [StringLength(50)]
+    public string ScriptureSource { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(100)]
+    public string Book { get; set; } = string.Empty;
+
+    public int Chapter { get; set; }
+
+    public int VerseNumber { get; set; }
+
+    [Required]
     [StringLength(2000)]
     public string Text { get; set; } = string.Empty;
-
-    [StringLength(120)]
-    public string Topic { get; set; } = string.Empty;
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 

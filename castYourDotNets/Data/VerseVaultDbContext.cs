@@ -59,8 +59,9 @@ public sealed class VerseVaultDbContext : DbContext
         {
             entity.HasKey(scripture => scripture.Id);
             entity.Property(scripture => scripture.Reference).IsRequired().HasMaxLength(150);
+            entity.Property(scripture => scripture.ScriptureSource).IsRequired().HasMaxLength(50);
+            entity.Property(scripture => scripture.Book).IsRequired().HasMaxLength(100);
             entity.Property(scripture => scripture.Text).IsRequired().HasMaxLength(2000);
-            entity.Property(scripture => scripture.Topic).HasMaxLength(120);
         });
 
         modelBuilder.Entity<MemorizationEntry>(entity =>

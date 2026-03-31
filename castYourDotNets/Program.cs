@@ -93,8 +93,11 @@ using (var scope = app.Services.CreateScope())
         CREATE TABLE IF NOT EXISTS Scriptures (
             Id TEXT NOT NULL PRIMARY KEY,
             Reference TEXT NOT NULL,
+            ScriptureSource TEXT NOT NULL,
+            Book TEXT NOT NULL,
+            Chapter INTEGER NOT NULL,
+            VerseNumber INTEGER NOT NULL,
             Text TEXT NOT NULL,
-            Topic TEXT NOT NULL,
             CreatedAtUtc TEXT NOT NULL,
             IsMemorized INTEGER NOT NULL,
             PracticeCount INTEGER NOT NULL,
@@ -215,8 +218,11 @@ app.MapPost("/api/scriptures", async (
     var scripture = new Scripture
     {
         Reference = request.Reference,
+        ScriptureSource = request.ScriptureSource,
+        Book = request.Book,
+        Chapter = request.Chapter,
+        VerseNumber = request.VerseNumber,
         Text = request.Text,
-        Topic = request.Topic,
         CreatedAtUtc = DateTime.UtcNow,
         IsMemorized = request.IsMemorized,
         PracticeCount = request.PracticeCount,
@@ -244,8 +250,11 @@ app.MapPut("/api/scriptures/{id:guid}", async (
     }
 
     scripture.Reference = request.Reference;
+    scripture.ScriptureSource = request.ScriptureSource;
+    scripture.Book = request.Book;
+    scripture.Chapter = request.Chapter;
+    scripture.VerseNumber = request.VerseNumber;
     scripture.Text = request.Text;
-    scripture.Topic = request.Topic;
     scripture.IsMemorized = request.IsMemorized;
     scripture.PracticeCount = request.PracticeCount;
     scripture.CurrentStreakDays = request.CurrentStreakDays;
