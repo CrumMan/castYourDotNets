@@ -39,7 +39,10 @@ public class ScriptureService
         return scriptures
             .Where(scripture => !scripture.IsMemorized)
             .OrderBy(scripture => scripture.LastPracticedAtUtc ?? DateTime.MinValue)
-            .ThenBy(scripture => scripture.Reference)
+            .ThenBy(scripture => scripture.Book)
+            .ThenBy(scripture => scripture.Chapter)
+            .ThenBy(scripture => scripture.Verse)
+
             .FirstOrDefault()
             ?? scriptures.FirstOrDefault();
     }

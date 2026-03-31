@@ -15,7 +15,7 @@
 else
 {
     <section class="card practice-card">
-        <p class="scripture-reference">@currentScripture.Reference</p>
+        <p class="scripture-reference">@($"{currentScripture.Book} {currentScripture.Chapter}:{currentScripture.Verse}")</p>
 
         @if (!string.IsNullOrWhiteSpace(currentScripture.Topic))
         {

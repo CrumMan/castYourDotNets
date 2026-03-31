@@ -35,11 +35,11 @@ else
     <section class="card">
         <h2>Scripture Status</h2>
         <ul class="scripture-list">
-            @foreach (var scripture in scriptures.OrderByDescending(s => s.PracticeCount).ThenBy(s => s.Reference))
+            @foreach (var scripture in scriptures.OrderByDescending(s => s.PracticeCount).ThenBy(s => s.Book).ThenBy(s => s.Chapter).ThenBy(s => s.Verse))
             {
                 <li class="scripture-item">
                     <div>
-                        <p class="scripture-reference">@scripture.Reference</p>
+                        <p class="scripture-reference">@($"{scripture.Book} {scripture.Chapter}:{scripture.Verse}")</p>
                         <p class="scripture-topic">Attempts: @scripture.PracticeCount</p>
                         <p class="scripture-topic">Current Streak: @scripture.CurrentStreakDays day(s)</p>
                         <p class="scripture-topic">

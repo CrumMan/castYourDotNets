@@ -15,8 +15,30 @@
             <ValidationSummary />
 
             <div class="form-field">
-                <label for="reference">Reference</label>
-                <InputText id="reference" class="input" @bind-Value="currentScripture.Reference" />
+                <label>Work</label>
+                <InputText class="input" @bind-Value="currentScripture.Work" />
+            </div>
+
+            <div class="form-field">
+                <label>Book</label>
+                <InputText class="input" @bind-Value="currentScripture.Book" />
+            </div>
+
+            <div class="form-field">
+                <label>Chapter</label>
+                <InputNumber class="input" @bind-Value="currentScripture.Chapter" />
+            </div>
+
+            <div class="form-field">
+                <label>Verse</label>
+                <InputNumber class="input" @bind-Value="currentScripture.Verse" />
+            </div>
+
+            <div class="form-field">
+                <label>Reference</label>
+                <p class="scripture-reference">
+                @($"{currentScripture.Book} {currentScripture.Chapter}:{currentScripture.Verse}")
+                </p>
             </div>
 
             <div class="form-field">
@@ -53,7 +75,7 @@
                 {
                     <li class="scripture-item">
                         <div>
-                            <p class="scripture-reference">@scripture.Reference</p>
+                            <p class="scripture-reference">@($"{scripture.Book} {scripture.Chapter}:{scripture.Verse}")</p>
                             <p>@scripture.Text</p>
                             @if (!string.IsNullOrWhiteSpace(scripture.Topic))
                             {
@@ -103,7 +125,10 @@
         currentScripture = new Scripture
         {
             Id = scripture.Id,
-            Reference = scripture.Reference,
+            Work = scripture.Work,
+            Book = scripture.Book,
+            Chapter = scripture.Chapter,
+            Verse = scripture.Verse,
             Text = scripture.Text,
             Topic = scripture.Topic,
             CreatedAtUtc = scripture.CreatedAtUtc,
@@ -113,6 +138,7 @@
             LastPracticedAtUtc = scripture.LastPracticedAtUtc,
             MemorizedAtUtc = scripture.MemorizedAtUtc
         };
+
         isEditing = true;
     }
 

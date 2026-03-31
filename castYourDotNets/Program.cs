@@ -64,21 +64,7 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<VerseVaultDbContext>();
     await dbContext.Database.EnsureCreatedAsync();
 
-    await dbContext.Database.ExecuteSqlRawAsync(
-        """
-        CREATE TABLE IF NOT EXISTS Scriptures (
-            Id TEXT NOT NULL PRIMARY KEY,
-            Reference TEXT NOT NULL,
-            Text TEXT NOT NULL,
-            Topic TEXT NOT NULL,
-            CreatedAtUtc TEXT NOT NULL,
-            IsMemorized INTEGER NOT NULL,
-            PracticeCount INTEGER NOT NULL,
-            CurrentStreakDays INTEGER NOT NULL,
-            LastPracticedAtUtc TEXT NULL,
-            MemorizedAtUtc TEXT NULL
-        );
-        """);
+    await ScriptureSeeder.SeedAsync(dbContext);
 
     await dbContext.Database.ExecuteSqlRawAsync(
         """
@@ -168,7 +154,9 @@ app.MapGet("/api/scriptures", async (
     CancellationToken cancellationToken) =>
 {
     var scriptures = await dbContext.Scriptures
-        .OrderBy(scripture => scripture.Reference)
+        .OrderBy(s => s.Book)
+        .ThenBy(s => s.Chapter)
+        .ThenBy(s => s.Verse)
         .ToListAsync(cancellationToken);
 
     return Results.Ok(scriptures);
@@ -184,21 +172,22 @@ app.MapGet("/api/scriptures/{id:guid}", async (
 });
 
 app.MapPost("/api/scriptures", async (
-    Scripture request,
+    CreateScriptureRequest request,
     VerseVaultDbContext dbContext,
     CancellationToken cancellationToken) =>
 {
     var scripture = new Scripture
     {
-        Reference = request.Reference,
+        Work = request.Work,
+        Book = request.Book,
+        Chapter = request.Chapter,
+        Verse = request.Verse,
         Text = request.Text,
         Topic = request.Topic,
         CreatedAtUtc = DateTime.UtcNow,
-        IsMemorized = request.IsMemorized,
-        PracticeCount = request.PracticeCount,
-        CurrentStreakDays = request.CurrentStreakDays,
-        LastPracticedAtUtc = request.LastPracticedAtUtc,
-        MemorizedAtUtc = request.MemorizedAtUtc
+        IsMemorized = false,
+        PracticeCount = 0,
+        CurrentStreakDays = 0
     };
 
     dbContext.Scriptures.Add(scripture);
@@ -209,7 +198,7 @@ app.MapPost("/api/scriptures", async (
 
 app.MapPut("/api/scriptures/{id:guid}", async (
     Guid id,
-    Scripture request,
+    UpdateScriptureRequest request,
     VerseVaultDbContext dbContext,
     CancellationToken cancellationToken) =>
 {
@@ -219,18 +208,19 @@ app.MapPut("/api/scriptures/{id:guid}", async (
         return Results.NotFound();
     }
 
-    scripture.Reference = request.Reference;
+    scripture.Work = request.Work;
+    scripture.Book = request.Book;
+    scripture.Chapter = request.Chapter;
+    scripture.Verse = request.Verse;
     scripture.Text = request.Text;
     scripture.Topic = request.Topic;
     scripture.IsMemorized = request.IsMemorized;
-    scripture.PracticeCount = request.PracticeCount;
-    scripture.CurrentStreakDays = request.CurrentStreakDays;
-    scripture.LastPracticedAtUtc = request.LastPracticedAtUtc;
-    scripture.MemorizedAtUtc = request.MemorizedAtUtc;
 
     await dbContext.SaveChangesAsync(cancellationToken);
+
     return Results.Ok(scripture);
 });
+
 
 app.MapDelete("/api/scriptures/{id:guid}", async (
     Guid id,

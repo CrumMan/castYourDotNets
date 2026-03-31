@@ -7,8 +7,19 @@ public class Scripture
     public Guid Id { get; set; } = Guid.NewGuid();
 
     [Required]
-    [StringLength(150)]
-    public string Reference { get; set; } = string.Empty;
+    [StringLength(50)]
+    // e.g. "Book of Mormon", "Bible"
+    public string Work { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(100)]
+    // e.g. "1 Nephi", "John"
+    public string Book { get; set; } = string.Empty;
+
+    public int Chapter { get; set; }
+
+    public int Verse { get; set; }
+
 
     [Required]
     [StringLength(2000)]
@@ -28,4 +39,7 @@ public class Scripture
     public DateTime? LastPracticedAtUtc { get; set; }
 
     public DateTime? MemorizedAtUtc { get; set; }
+
+    public string Reference => $"{Book} {Chapter}:{Verse}";
+
 }

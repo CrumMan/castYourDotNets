@@ -21,7 +21,7 @@
                 @foreach (var scripture in scriptures)
                 {
                     <li class="scripture-item">
-                        <p class="scripture-reference">@scripture.Reference</p>
+                        <p class="scripture-reference">@($"{scripture.Book} {scripture.Chapter}:{scripture.Verse}")</p>
                         <p>@scripture.Text</p>
                         <div class="button-row">
                             <button type="button" class="btn primary" @onclick="() => SelectScripture(scripture)">Memorize This</button>
@@ -35,7 +35,7 @@
 else
 {
     <section class="card memorize-card">
-        <h2>@selectedScripture.Reference</h2>
+        <h2>@($"{selectedScripture.Book} {selectedScripture.Chapter}:{selectedScripture.Verse}")</h2>
 
         @if (!gameStarted)
         {
