@@ -67,11 +67,21 @@ public sealed class VerseVaultDbContext : DbContext
         {
             entity.HasKey(entry => entry.Id);
             entity.Property(entry => entry.GameText).IsRequired().HasMaxLength(2000);
+            entity.Property(entry => entry.TableVerses).HasMaxLength(4000);
+            entity.Property(entry => entry.TableThemes).HasMaxLength(2000);
+            entity.Property(entry => entry.TableKeywords).HasMaxLength(2000);
+            entity.Property(entry => entry.TableInsights).HasMaxLength(2000);
+            entity.Property(entry => entry.TablePersonalApplication).HasMaxLength(2000);
 
             entity.HasOne(entry => entry.User)
                 .WithMany()
                 .HasForeignKey(entry => entry.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(entry => entry.Scripture)
+                .WithMany()
+                .HasForeignKey(entry => entry.ScriptureId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

@@ -1,6 +1,7 @@
 @page "/memorize"
 @rendermode InteractiveServer
 @inject ScriptureService ScriptureService
+@using castYourDotNets.Contracts
 
 <PageTitle>Memorize</PageTitle>
 
@@ -24,61 +25,245 @@
                         <p class="scripture-reference">@scripture.Reference</p>
                         <p>@scripture.Text</p>
                         <div class="button-row">
-                            <button type="button" class="btn primary" @onclick="() => SelectScripture(scripture)">Memorize This</button>
-                        </div>
-                    </li>
-                }
-            </ul>
-        }
-    </section>
-}
+                            <button type="button" class="btn primary" @onclick="() => SelectScripture(scripture)">Memorize
+                                This</button>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    }
 else
-{
-    <section class="card memorize-card">
-        <h2>@selectedScripture.Reference</h2>
+    {
+        <section class="card memorize-card">
+            <h2>@selectedScripture.Reference</h2>
 
-        @if (!gameStarted)
-        {
-            <div class="practice-text">
-                <p>@selectedScripture.Text</p>
-            </div>
-            <p>Read the scripture above, then start the game when you are ready.</p>
-            <div class="button-row">
-                <button type="button" class="btn primary" @onclick="StartGame">Start Game</button>
-                <button type="button" class="btn" @onclick="BackToList">Back</button>
-            </div>
-        }
-        else
-        {
-            <p>Type the scripture from memory:</p>
-
-            <div class="form-field">
-                <textarea class="input textarea" @bind="userAttempt" disabled="@gameChecked"></textarea>
+            <div class="tabs">
+                <button type="button" class="tab-button @(activeTab == "game" ? "active" : "")"
+                        @onclick="@(() => SetActiveTab("game"))">
+                    Memory Game
+                </button>
+                <button type="button" class="tab-button @(activeTab == "table" ? "active" : "")"
+                        @onclick="@(() => SetActiveTab("table"))">
+                    Study Table
+                </button>
             </div>
 
-            <div class="button-row">
-                @if (!gameChecked)
+            <!-- Memory Game Tab -->
+            @if (activeTab == "game")
+            {
+                @if (!gameStarted)
                 {
-                    <button type="button" class="btn primary" @onclick="CheckAttempt">Check</button>
-                    <button type="button" class="btn" @onclick="StartGame">Reset</button>
+                    <div class="practice-text">
+                        <p>@selectedScripture.Text</p>
+                    </div>
+                    <p>Read the scripture above, then start the game when you are ready.</p>
+                    <div class="button-row">
+                        <button type="button" class="btn primary" @onclick="StartGame">Start Game</button>
+                        <button type="button" class="btn" @onclick="BackToList">Back</button>
+                    </div>
                 }
                 else
                 {
-                    <button type="button" class="btn primary" @onclick="StartGame">Try Again</button>
-                    <button type="button" class="btn" @onclick="() => SelectScripture(selectedScripture)">Read Again</button>
-                }
-                <button type="button" class="btn" @onclick="BackToList">Back</button>
-            </div>
+                    <p>Type the scripture from memory:</p>
 
-            @if (gameChecked)
-            {
-                <div class="memorize-result @(isCorrect ? "result-correct" : "result-incorrect")">
-                    <p>@(isCorrect ? "You got it right!" : "Not quite. Keep practicing!")</p>
-                </div>
+                    <div class="form-field">
+                        <textarea class="input textarea" @bind="userAttempt" disabled="@gameChecked"></textarea>
+                    </div>
+
+                    <div class="button-row">
+                        @if (!gameChecked)
+                        {
+                            <button type="button" class="btn primary" @onclick="CheckAttempt">Check</button>
+                            <button type="button" class="btn" @onclick="StartGame">Reset</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn primary" @onclick="StartGame">Try Again</button>
+                            <button type="button" class="btn" @onclick="() => SelectScripture(selectedScripture)">Read Again</button>
+                        }
+                        <button type="button" class="btn" @onclick="BackToList">Back</button>
+                    </div>
+
+                    @if (gameChecked)
+                    {
+                        <div class="memorize-result @(isCorrect ? "result-correct" : "result-incorrect")">
+                            <p>@(isCorrect ? "You got it right!" : "Not quite. Keep practicing!")</p>
+                        </div>
+                    }
+                }
             }
+
+            <!-- Study Table Tab -->
+            @if (activeTab == "table")
+            {
+                <div class="study-table-section">
+                    <p class="section-subtitle">Create a structured memorization table (Joshua 1:8) to deepen your understanding and
+                        meditation.</p>
+
+                        @if (!isEditingTable)
+                        {
+                            <div class="section-content">
+                                <p class="info-text">Fill in each section below to create a comprehensive study guide for this scripture.
+                                </p>
+
+                                <div class="form-field">
+                                    <label>📖 Verses - Full passage or selected verses:</label>
+                                    <textarea class="input textarea" @bind="tableVerses"
+                                              placeholder="Enter the complete verse text or your selection..." rows="3"></textarea>
+                                </div>
+
+                                <div class="form-field">
+                                    <label>🎯 Themes - Main themes and topics:</label>
+                                    <textarea class="input textarea" @bind="tableThemes"
+                                              placeholder="What are the main themes? (e.g., faith, love, perseverance)" rows="2"></textarea>
+                                </div>
+
+                                <div class="form-field">
+                                    <label>🔑 Keywords - Key words and phrases:</label>
+                                    <textarea class="input textarea" @bind="tableKeywords"
+                                              placeholder="Highlight important words and phrases..." rows="2"></textarea>
+                                </div>
+
+                                <div class="form-field">
+                                    <label>💡 Insights - Personal insights and spiritual lessons:</label>
+                                    <textarea class="input textarea" @bind="tableInsights"
+                                              placeholder="What insights did God reveal to you? What spiritual lessons do you see?"
+                                              rows="3"></textarea>
+                                </div>
+
+                                <div class="form-field">
+                                    <label>🌱 Personal Application - How to apply this in your life:</label>
+                                    <textarea class="input textarea" @bind="tablePersonalApplication"
+                                              placeholder="How will you apply this scripture to your daily life? What changes will you make?"
+                                              rows="3"></textarea>
+                                </div>
+
+                                <div class="button-row">
+                                    <button type="button" class="btn primary" @onclick="SaveMemorizationTable">Save Study Table</button>
+                                    <button type="button" class="btn" @onclick="BackToList">Back</button>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(tableMessage))
+                                {
+                                    <div class="message @(tableMessageType == "success" ? "success" : "error")">
+                                        <p>@tableMessage</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="loading-message">
+                                <p>Saving your study table...</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
         }
-    </section>
-}
+
+        <style>
+            .tabs {
+                display: flex;
+                gap: 10px;
+                margin: 20px 0;
+                border-bottom: 2px solid #ddd;
+            }
+
+            .tab-button {
+                padding: 10px 20px;
+                background: transparent;
+                border: none;
+                border-bottom: 3px solid transparent;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 500;
+                color: #666;
+                transition: all 0.3s ease;
+            }
+
+            .tab-button:hover {
+                color: #333;
+                background-color: #f5f5f5;
+            }
+
+            .tab-button.active {
+                color: #007bff;
+                border-bottom-color: #007bff;
+            }
+
+            .study-table-section {
+                padding: 20px 0;
+            }
+
+            .section-subtitle {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 15px;
+                font-style: italic;
+            }
+
+            .section-content {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .info-text {
+                color: #555;
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .form-field label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #333;
+            }
+
+            .form-field textarea {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                resize: vertical;
+            }
+
+            .form-field textarea:focus {
+                outline: none;
+                border-color: #007bff;
+                box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            }
+
+            .loading-message {
+                text-align: center;
+                padding: 40px;
+                color: #666;
+            }
+
+            .message {
+                padding: 15px;
+                border-radius: 4px;
+                margin-top: 15px;
+            }
+
+            .message.success {
+                background-color: #d4edda;
+                border: 1px solid #c3e6cb;
+                color: #155724;
+            }
+
+            .message.error {
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+                color: #721c24;
+            }
+        </style>
 
 @code {
     private List<Scripture> scriptures = [];
@@ -87,6 +272,19 @@ else
     private bool gameChecked;
     private bool isCorrect;
     private string userAttempt = string.Empty;
+    
+    // Tab management
+    private string activeTab = "game";
+
+    // Memorization Table fields
+    private string tableVerses = string.Empty;
+    private string tableThemes = string.Empty;
+    private string tableKeywords = string.Empty;
+    private string tableInsights = string.Empty;
+    private string tablePersonalApplication = string.Empty;
+    private bool isEditingTable = false;
+    private string tableMessage = string.Empty;
+    private string tableMessageType = "success";
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,6 +297,17 @@ else
         gameStarted = false;
         gameChecked = false;
         userAttempt = string.Empty;
+        activeTab = "game";
+        ClearTableFields();
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+        if (tab == "table")
+        {
+            ClearTableMessage();
+        }
     }
 
     private void StartGame()
@@ -128,10 +337,96 @@ else
         gameStarted = false;
         gameChecked = false;
         userAttempt = string.Empty;
+        activeTab = "game";
+        ClearTableFields();
     }
 
     private static string NormalizeText(string text)
     {
         return text.Trim().Replace("\r\n", " ").Replace("\n", " ").Replace("  ", " ");
+    }
+
+    // Memorization Table Methods
+    private void ClearTableFields()
+    {
+        tableVerses = string.Empty;
+        tableThemes = string.Empty;
+        tableKeywords = string.Empty;
+        tableInsights = string.Empty;
+        tablePersonalApplication = string.Empty;
+        ClearTableMessage();
+    }
+
+    private void ClearTableMessage()
+    {
+        tableMessage = string.Empty;
+        tableMessageType = "success";
+    }
+
+    private async Task SaveMemorizationTable()
+    {
+        if (selectedScripture is null)
+        {
+            tableMessage = "No scripture selected.";
+            tableMessageType = "error";
+            return;
+        }
+
+        // Validate that at least some content is provided
+        if (string.IsNullOrWhiteSpace(tableVerses) &&
+            string.IsNullOrWhiteSpace(tableThemes) &&
+            string.IsNullOrWhiteSpace(tableKeywords) &&
+            string.IsNullOrWhiteSpace(tableInsights) &&
+            string.IsNullOrWhiteSpace(tablePersonalApplication))
+        {
+            tableMessage = "Please fill in at least one field to create your study table.";
+            tableMessageType = "error";
+            return;
+        }
+
+        isEditingTable = true;
+
+        try
+        {
+            var request = new CreateMemorizationEntryRequest
+            {
+                ScriptureId = selectedScripture.Id,
+                GameText = selectedScripture.Text,
+                IsMemorized = false,
+                IsMemorizedThroughGame = false,
+                TableVerses = tableVerses.Trim(),
+                TableThemes = tableThemes.Trim(),
+                TableKeywords = tableKeywords.Trim(),
+                TableInsights = tableInsights.Trim(),
+                TablePersonalApplication = tablePersonalApplication.Trim(),
+                HasMemorizationTable = true
+            };
+
+            var result = await ScriptureService.CreateMemorizationTableAsync(request);
+
+            if (result is not null)
+            {
+                tableMessage = "✓ Study table saved successfully! Continue your meditation journey with this scripture.";
+                tableMessageType = "success";
+                ClearTableFields();
+                // Optionally clear after a delay to show success message
+                await Task.Delay(2000);
+                activeTab = "game";
+            }
+            else
+            {
+                tableMessage = "Failed to save study table. Please try again.";
+                tableMessageType = "error";
+            }
+        }
+        catch (Exception ex)
+        {
+            tableMessage = $"Error saving study table: {ex.Message}";
+            tableMessageType = "error";
+        }
+        finally
+        {
+            isEditingTable = false;
+        }
     }
 }
