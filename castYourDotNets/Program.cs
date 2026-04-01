@@ -71,7 +71,7 @@ using (var scope = app.Services.CreateScope())
     //insert the values into database. if empty
     if (!dbContext.VerseVaults.Any())
     {
-        SeedData.Initialize(dbContext);
+        SeedData.Initialize(dbContext, builder.Environment.ContentRootPath);
         Console.WriteLine("Verse vault seeded successfully.");
     }
     // creating the local schema have a database for the uneditable (after inital seed) of scripture_verses
@@ -452,4 +452,3 @@ static MemorizationEntryResponse ToMemorizationEntryResponse(MemorizationEntry e
         IsMemorized = entry.IsMemorized,
         IsMemorizedThroughGame = entry.IsMemorizedThroughGame
     };
-
