@@ -55,7 +55,7 @@
         }
 
         var client = ClientFactory.CreateClient("api");
-        var response = await client.PostAsJsonAsync("accounts/register", new
+        var response = await client.PostAsJsonAsync("/api/accounts/register", new
         {
             model.Username,
             model.Password

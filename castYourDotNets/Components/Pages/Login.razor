@@ -8,11 +8,11 @@
 @using Microsoft.AspNetCore.Components.Forms
 
 @inject ProtectedSessionStorage SessionStorage
+@using Microsoft.AspNetCore.Mvc
 
 <h3 class="title">Login</h3>
 
-@* <EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm" class="form"> *@
-<EditForm Model="loginModel" FormName="LoginForm" class="form">
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm" class="form">
 
     <DataAnnotationsValidator />
 
@@ -29,8 +29,9 @@
     </div>
 
     <p>Username: @loginModel.Username</p>
+    <p>Password: @loginModel.Password</p>
 
-    <button type="submit" class="btn" @onclick="HandleLogin">Login</button>
+    <button type="submit" class="btn">Login</button>
 </EditForm>
 
 @if (!string.IsNullOrEmpty(loginModel.ServerError))
@@ -42,19 +43,30 @@
     private LoginModel loginModel = new();
     private bool loginCompleted = false;
     private string authToken = string.Empty;
-    private string username = string.Empty;
+    private string Username = string.Empty;
 
     private async Task HandleLogin()
     {
-        loginModel.ServerError = null; // Clear previous errors
+        Console.WriteLine($"Username: {loginModel.Username}");
+        Console.WriteLine($"Password: {loginModel.Password}");
+        loginModel.ServerError = null;
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/accounts/login", loginModel);
+            var response = await Http.PostAsJsonAsync("/api/accounts/login", new LoginRequest
+            {
+                Username = loginModel.Username,
+                Password = loginModel.Password
+            });
 
             if (!response.IsSuccessStatusCode)
             {
-                loginModel.ServerError = "Login failed. Try again.";
+                var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+                loginModel.ServerError =
+                    problem?.Errors.Values.SelectMany(e => e).FirstOrDefault()
+                    ?? "Login failed.";
+
                 return;
             }
 
@@ -66,12 +78,10 @@
                 return;
             }
 
-            // Store locally for prerender-safe session storage
             authToken = result.AccessToken;
-            username = result.Account.Username;
+            Username = result.Account.Username;
             loginCompleted = true;
 
-            // Trigger session storage write after render
             StateHasChanged();
         }
         catch (Exception ex)
@@ -86,7 +96,7 @@
         {
             // Save token and username safely (JS interop) after render
             await SessionStorage.SetAsync("authToken", authToken);
-            await SessionStorage.SetAsync("username", username);
+            await SessionStorage.SetAsync("Username", Username);
 
             // Redirect to home
             Navigation.NavigateTo("/");
