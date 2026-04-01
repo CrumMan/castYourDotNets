@@ -1,0 +1,75 @@
+@page "/register"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Mvc
+@using castYourDotNets.Contracts
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Navigation
+
+<h3 class="title">Create Account</h3>
+
+<EditForm Model="model" OnValidSubmit="HandleRegister" class="form" FormName="LoginForm">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label>Username</label>
+        <InputText @bind-Value="model.Username" autofocus class="input" />
+        <ValidationMessage For="@(() => model.Username)" />
+    </div>
+
+    <div class="form-group">
+        <label>Password</label>
+        <InputText @bind-Value="model.Password" type="password" class="input" />
+        <ValidationMessage For="@(() => model.Password)" />
+    </div>
+
+    <div class="form-group">
+        <label>Confirm Password</label>
+        <InputText @bind-Value="model.ConfirmPassword" type="password" class="input" />
+        <ValidationMessage For="@(() => model.ConfirmPassword)" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(model.ServerError))
+    {
+        <div class="error">@model.ServerError</div>
+    }
+
+    <button type="submit" class="btn">Register</button>
+</EditForm>
+
+<p class="link">
+    Already have an account?
+    <a href="/login">Login here</a>
+</p>
+
+@code {
+    private RegisterModel model = new() { Username = "", Password = "", ConfirmPassword = "" };
+
+    private async Task HandleRegister()
+    {
+        model.ServerError = null;
+
+        if (model.Password != model.ConfirmPassword)
+        {
+            model.ServerError = "Passwords do not match.";
+            return;
+        }
+
+        var client = ClientFactory.CreateClient("api");
+        var response = await client.PostAsJsonAsync("accounts/register", new
+        {
+            model.Username,
+            model.Password
+        });
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+            model.ServerError = problem?.Errors.Values.SelectMany(e => e).FirstOrDefault()
+                                ?? "Registration failed.";
+            return;
+        }
+
+        // Redirect to login after success
+        Navigation.NavigateTo("/login");
+    }
+}

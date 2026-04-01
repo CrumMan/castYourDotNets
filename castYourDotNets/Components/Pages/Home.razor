@@ -1,7 +1,48 @@
 @page "/"
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage SessionStorage
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+@inject ProtectedSessionStorage SessionStorage
 
-<h1>castYourDotNets</h1>
-<p>Everything in this app runs as Blazor pages and components.</p>
-<p>Use the navigation to move between pages while we build features.</p>
+<h3>Home Page</h3>
+
+@if (!string.IsNullOrEmpty(username))
+{
+    <p>Welcome, @username 👋</p>
+    <button @onclick="Logout">Logout</button>
+}
+else
+{
+    <p>You are not logged in.</p>
+}
+
+@code {
+    private string username;
+    private bool firstRender = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRenderFlag)
+    {
+        if (firstRenderFlag)
+        {
+            firstRender = false;
+
+            // Get username from ProtectedSessionStorage
+            var result = await SessionStorage.GetAsync<string>("username");
+            if (result.Success)
+            {
+                username = result.Value;
+            }
+
+            StateHasChanged(); // Force re-render
+        }
+    }
+
+    private async Task Logout()
+    {
+        await SessionStorage.DeleteAsync("username");
+        await SessionStorage.DeleteAsync("authToken");
+        username = null;
+        StateHasChanged();
+    }
+}
