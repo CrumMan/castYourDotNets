@@ -9,6 +9,7 @@ A scripture memorization app built with .NET and Blazor.
 - Israel Ojo
 - Godwin Essien
 - Clarence Ahiabor
+- Dakota Paul Haithcock
 
 ## Components
 
@@ -24,4 +25,4 @@ A scripture memorization app built with .NET and Blazor.
 
 - [Font - Inconsolata (Google Fonts)](https://fonts.google.com/specimen/Inconsolata)
 
-- [json link for data. Put the (Book of Mormon, Doctorine and Covenants, New Testament, and Old Testament) files into the data folder)](https://github.com/bcbooks/scriptures-json)
+- [json link for data. Put the (Book of Mormon, Doctorine and Covenants, New Testament, and Old Testament) files into the Data folder)](https://github.com/bcbooks/scriptures-json)
