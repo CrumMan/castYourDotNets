@@ -16,15 +16,16 @@
             <ValidationSummary />
 
             <div>
-                <label>Scripture</label>
-                <select @onchange="OnScriptureEnumChanged">
+                <label for="scriptureSelect">Scripture</label>
+                <select id="scriptureSelect" name="scriptureSelect" @onchange="OnScriptureEnumChanged">
                     @foreach (var s in Enum.GetValues(typeof(Verse_Vault.Scripture)))
                     {
                         <option value="@s">@FormatEnumDisplay(s.ToString())</option>
                     }
                 </select>
-                <label>Book</label>
-                <select @onchange="e => { selectedBook = e.Value.ToString(); UpdateChapters(); }">
+                <label for="bookSelect">Book</label>
+                <select id="bookSelect" name="bookSelect"
+                        @onchange="e => { selectedBook = e.Value.ToString(); UpdateChapters(); }">
                     @if (books != null && books.Any())
                     {
                         @foreach (var book in books)
@@ -36,8 +37,9 @@
             </div>
 
             <div>
-                <label>Chapter</label>
-                <select @onchange="e => { selectedChapter = e.Value.ToString(); UpdateVerses(); }">
+                <label for="chapterSelect">Chapter</label>
+                <select id="chapterSelect" name="chapterSelect"
+                        @onchange="e => { selectedChapter = e.Value.ToString(); UpdateVerses(); }">
                     @if (chapters != null && chapters.Any())
                     {
                         @foreach (var chap in chapters)
@@ -47,7 +49,8 @@
                     }
                 </select>
                 <label>:</label>
-                <select @onchange="e => { selectedVerse = int.Parse(e.Value.ToString()); LoadSelectedVerse(); }">
+                <select id="verseSelect" name="verseSelect"
+                        @onchange="e => { selectedVerse = int.Parse(e.Value.ToString()); LoadSelectedVerse(); }">
                     @if (verses != null && verses.Any())
                     {
                         @foreach (var v in verses)
@@ -59,8 +62,8 @@
             </div>
 
             <div>
-                <label>Text</label><br />
-                <textarea value="@CleanVerseText" readonly> </textarea>
+                <label for="verseText">Text</label><br />
+                <textarea id="verseText" name="verseText" value="@CleanVerseText" readonly> </textarea>
             </div>
 
             

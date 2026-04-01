@@ -8,4 +8,9 @@ public sealed class UserAccount
     public string PasswordHash { get; set; } = string.Empty;
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public List<PageClass> PageClasses { get; } = [];
+
+    /// <summary>
+    /// User's scripture memorization progress and tracking
+    /// </summary>
+    public List<UserScripture> UserScriptures { get; } = [];
 }

@@ -114,4 +114,92 @@ public class ScriptureService
         response.EnsureSuccessStatusCode();
         return true;
     }
+
+    // Memorization Table Methods
+    /// <summary>
+    /// Creates a new memorization entry with structured table elements
+    /// Following Joshua 1:8 meditation pattern
+    /// </summary>
+    public async Task<MemorizationEntryResponse?> CreateMemorizationTableAsync(
+        CreateMemorizationEntryRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.PostAsJsonAsync(
+            "api/memorization-entries",
+            request,
+            cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<MemorizationEntryResponse>(cancellationToken);
+    }
+
+    /// <summary>
+    /// Updates an existing memorization table entry
+    /// </summary>
+    public async Task<MemorizationEntryResponse?> UpdateMemorizationTableAsync(
+        Guid id,
+        CreateMemorizationEntryRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.PutAsJsonAsync(
+            $"api/memorization-entries/{id}",
+            request,
+            cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<MemorizationEntryResponse>(cancellationToken);
+    }
+
+    /// <summary>
+    /// Gets all memorization entries for the current user
+    /// </summary>
+    public async Task<IReadOnlyList<MemorizationEntryResponse>> GetMemorizationEntriesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await httpClient.GetFromJsonAsync<List<MemorizationEntryResponse>>(
+            "api/memorization-entries",
+            cancellationToken) ?? [];
+    }
+
+    /// <summary>
+    /// Gets a specific memorization entry by ID
+    /// </summary>
+    public async Task<MemorizationEntryResponse?> GetMemorizationEntryAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.GetAsync($"api/memorization-entries/{id}", cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<MemorizationEntryResponse>(cancellationToken);
+    }
+
+    /// <summary>
+    /// Deletes a memorization entry
+    /// </summary>
+    public async Task<bool> DeleteMemorizationEntryAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.DeleteAsync($"api/memorization-entries/{id}", cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return true;
+    }
 }
