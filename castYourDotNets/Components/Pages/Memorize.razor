@@ -69,7 +69,8 @@ else
                     <p>Type the scripture from memory:</p>
 
                     <div class="form-field">
-                        <textarea class="input textarea" @bind="userAttempt" disabled="@gameChecked"></textarea>
+                        <textarea id="userAttempt" name="userAttempt" class="input textarea" @bind="userAttempt"
+                                  disabled="@gameChecked"></textarea>
                     </div>
 
                     <div class="button-row">
@@ -109,33 +110,34 @@ else
                                 </p>
 
                                 <div class="form-field">
-                                    <label>📖 Verses - Full passage or selected verses:</label>
-                                    <textarea class="input textarea" @bind="tableVerses"
+                                    <label for="tableVerses">📖 Verses - Full passage or selected verses:</label>
+                                    <textarea id="tableVerses" name="tableVerses" class="input textarea" @bind="tableVerses"
                                               placeholder="Enter the complete verse text or your selection..." rows="3"></textarea>
                                 </div>
 
                                 <div class="form-field">
-                                    <label>🎯 Themes - Main themes and topics:</label>
-                                    <textarea class="input textarea" @bind="tableThemes"
+                                    <label for="tableThemes">🎯 Themes - Main themes and topics:</label>
+                                    <textarea id="tableThemes" name="tableThemes" class="input textarea" @bind="tableThemes"
                                               placeholder="What are the main themes? (e.g., faith, love, perseverance)" rows="2"></textarea>
                                 </div>
 
                                 <div class="form-field">
-                                    <label>🔑 Keywords - Key words and phrases:</label>
-                                    <textarea class="input textarea" @bind="tableKeywords"
+                                    <label for="tableKeywords">🔑 Keywords - Key words and phrases:</label>
+                                    <textarea id="tableKeywords" name="tableKeywords" class="input textarea" @bind="tableKeywords"
                                               placeholder="Highlight important words and phrases..." rows="2"></textarea>
                                 </div>
 
                                 <div class="form-field">
-                                    <label>💡 Insights - Personal insights and spiritual lessons:</label>
-                                    <textarea class="input textarea" @bind="tableInsights"
+                                    <label for="tableInsights">💡 Insights - Personal insights and spiritual lessons:</label>
+                                    <textarea id="tableInsights" name="tableInsights" class="input textarea" @bind="tableInsights"
                                               placeholder="What insights did God reveal to you? What spiritual lessons do you see?"
                                               rows="3"></textarea>
                                 </div>
 
                                 <div class="form-field">
-                                    <label>🌱 Personal Application - How to apply this in your life:</label>
-                                    <textarea class="input textarea" @bind="tablePersonalApplication"
+                                    <label for="tablePersonalApplication">🌱 Personal Application - How to apply this in your life:</label>
+                                    <textarea id="tablePersonalApplication" name="tablePersonalApplication" class="input textarea"
+                                              @bind="tablePersonalApplication"
                                               placeholder="How will you apply this scripture to your daily life? What changes will you make?"
                                               rows="3"></textarea>
                                 </div>
