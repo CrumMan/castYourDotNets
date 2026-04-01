@@ -23,4 +23,5 @@ A scripture memorization app built with .NET and Blazor.
 ## Resources
 
 - [Font - Inconsolata (Google Fonts)](https://fonts.google.com/specimen/Inconsolata)
--[json link for data. Put the (Book of Mormon, Doctorine and Covenants, New Testament, and Old Testament) files into the data folder)](https://github.com/bcbooks/scriptures-json)
+
+- [json link for data. Put the (Book of Mormon, Doctorine and Covenants, New Testament, and Old Testament) files into the data folder)](https://github.com/bcbooks/scriptures-json)
