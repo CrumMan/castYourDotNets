@@ -1,7 +1,5 @@
 using castYourDotNets.Data;
 using castYourDotNets.Models;
-using Microsoft.EntityFrameworkCore;
-using SQLitePCL;
 using System.Text.Json;
 
 
@@ -9,91 +7,100 @@ namespace castYourDotNets;
 
 public static class SeedData
 {
-    public static void Initialize(VerseVaultDbContext context)
+    public static void Initialize(VerseVaultDbContext context, string contentRootPath)
     {
+        Verse_Vault? vault = null;
+        var seedFiles = new[]
         {
-            Verse_Vault vault = null;
-            string[] paths = ["Data/book-of-mormon.json", "Data/old-testament.json", "Data/new-testament.json", "Data/doctrine-and-covenants.json"];
-            foreach (string datapath in paths)
+            new
             {
-                Verse_Vault.Scripture scripture_book;
-                switch (datapath)
-                {
-                    case "Data/book-of-mormon.json":
-                        scripture_book = Verse_Vault.Scripture.BookOfMormon;
-                        break;
-                    case "Data/old-testament.json":
-                        scripture_book = Verse_Vault.Scripture.OldTestament;
-                        break;
-                    case "Data/new-testament.json":
-                        scripture_book = Verse_Vault.Scripture.NewTestament;
-                        break;
-                    case "Data/doctrine-and-covenants.json":
-                        scripture_book = Verse_Vault.Scripture.DoctrineAndCovenants;
-                        break;
-                    default:
-                        System.Console.WriteLine($"Unknown datapath: {datapath}");
-                        return;
-                }
-                if (!File.Exists(datapath))
-                {
-                    System.Console.WriteLine($"error finding {datapath}");
-                    return;
-                }
-                string json = File.ReadAllText(datapath);
+                RelativePath = "Data/book-of-mormon.json",
+                Scripture = Verse_Vault.Scripture.BookOfMormon
+            },
+            new
+            {
+                RelativePath = "Data/old-testament.json",
+                Scripture = Verse_Vault.Scripture.OldTestament
+            },
+            new
+            {
+                RelativePath = "Data/new-testament.json",
+                Scripture = Verse_Vault.Scripture.NewTestament
+            },
+            new
+            {
+                RelativePath = "Data/doctrine-and-covenants.json",
+                Scripture = Verse_Vault.Scripture.DoctrineAndCovenants
+            }
+        };
 
-                var data = JsonSerializer.Deserialize<ScriptureRoot>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (data == null || (data.sections == null && data.books == null))
+        foreach (var seedFile in seedFiles)
+        {
+            var dataPath = Path.Combine(contentRootPath, seedFile.RelativePath);
+            if (!File.Exists(dataPath))
+            {
+                Console.WriteLine($"Unable to find seed file at {dataPath}");
+                return;
+            }
+
+            var json = File.ReadAllText(dataPath);
+            var data = JsonSerializer.Deserialize<ScriptureRoot>(
+                json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (data == null || (data.sections == null && data.books == null))
+            {
+                Console.WriteLine($"Seed data for {dataPath} is empty or invalid.");
+                return;
+            }
+
+            if (seedFile.Scripture == Verse_Vault.Scripture.DoctrineAndCovenants)
+            {
+                foreach (var section in data.sections ?? [])
                 {
-                    System.Console.WriteLine($"data for {datapath} is null");
-                    return;
-                }
-                if (scripture_book == Verse_Vault.Scripture.DoctrineAndCovenants)
-                {
-                    foreach (var section in data.sections)
+                    foreach (var verse in section.verses)
                     {
-                        foreach (var verse in section.verses)
+                        vault = new Verse_Vault
+                        {
+                            scripture = seedFile.Scripture,
+                            book = "Doctrine and Covenants",
+                            Chapter = section.section,
+                            VerseInt = verse.verse,
+                            VerseText = verse.text,
+                            Verse_Refrence = verse.Verse_Refrence ?? $"D&C {section.section}:{verse.verse}"
+                        };
+                        context.VerseVaults.Add(vault);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var book in data.books ?? [])
+                {
+                    foreach (var chapter in book.chapters)
+                    {
+                        foreach (var verse in chapter.verses)
                         {
                             vault = new Verse_Vault
                             {
-                                scripture = scripture_book,
-                                book = "Doctrine and Covenants",
-                                Chapter = section.section,
+                                scripture = seedFile.Scripture,
+                                book = book.book,
+                                Chapter = chapter.chapter,
                                 VerseInt = verse.verse,
                                 VerseText = verse.text,
-                                Verse_Refrence = verse.Verse_Refrence ?? $"D&C {section.section}:{verse.verse}"
+                                Verse_Refrence = verse.Verse_Refrence ?? $"{book.book} {chapter.chapter}:{verse.verse}"
                             };
                             context.VerseVaults.Add(vault);
                         }
                     }
-
-                }
-                else
-                {
-                    foreach (var book in data.books)
-                    {
-                        foreach (var chapter in book.chapters)
-                        {
-                            foreach (var verse in chapter.verses)
-                            {
-                                vault = new Verse_Vault
-                                {
-                                    scripture = scripture_book,
-                                    book = book.book,
-                                    Chapter = chapter.chapter,
-                                    VerseInt = verse.verse,
-                                    VerseText = verse.text,
-                                    Verse_Refrence = verse.Verse_Refrence ?? $"{book.book} {chapter.chapter}:{verse.verse}"
-                                };
-                                context.VerseVaults.Add(vault);
-                            }
-                        }
-                    }
-
                 }
             }
-            context.SaveChanges();
-            if (vault != null) System.Console.WriteLine($"Initialized, {vault.Verse_Refrence} was the last input refrence");
+        }
+
+        context.SaveChanges();
+        if (vault != null)
+        {
+            Console.WriteLine($"Initialized, {vault.Verse_Refrence} was the last input reference.");
         }
     }
 }
