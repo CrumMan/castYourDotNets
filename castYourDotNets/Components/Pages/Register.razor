@@ -1,0 +1,115 @@
+@page "/register"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div style="color:red; white-space:pre-line;">
+        @ErrorMessage
+    </div>
+}
+
+<PageTitle>Register</PageTitle>
+
+<h1>Register</h1>
+<div class="scriptures-grid">
+    <section class="card">
+        <h2>Account Information</h2>
+        <EditForm EditContext="@editContext" FormName="RegisterForm" OnValidSubmit="@RegisterAccount">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <label>Username</label>
+            <InputText id="username" @bind-Value="registerModel.Username" />
+            <ValidationMessage For="@(() => registerModel.Username)" />
+
+            <label>Password</label>
+            <InputText id="password" @bind-Value="registerModel.Password" type="password" />
+            <ValidationMessage For="@(() => registerModel.Password)" />
+
+            <label>Confirm Password</label>
+            <InputText id="confirmPassword" @bind-Value="registerModel.ConfirmPassword" type="password" />
+            <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+
+            <button type="submit" disabled="@isLoading">
+                @(isLoading ? "Signing up..." : "Sign Up")
+            </button>
+        </EditForm>
+    </section>
+    <section class="card">
+        <h2>Why Sign Up?</h2>
+        <p>Cast Your Dot Nets is a Scripture focused memory game designed to help you 
+            track your practice and progress! Signing up allows you to save your scriptures
+            and see how far you've gotten. It's quick, easy and free!
+        </p>
+    </section>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+    private EditContext? editContext;
+    private bool isLoading = false;
+    private string? ErrorMessage;
+
+    protected override void OnInitialized()
+    {
+        // Create an EditContext that tracks registerModel
+        editContext = new EditContext(registerModel);
+
+        // Optional: subscribe to field changes if you want debugging or custom behavior
+        editContext.OnFieldChanged += (sender, e) =>
+        {
+            @* Console.WriteLine($"{e.FieldIdentifier.FieldName} changed to: {e.FieldIdentifier.GetValue()}"); *@
+        };
+    }
+    private async Task RegisterAccount()
+    {
+        Console.WriteLine("registering");
+        Console.WriteLine(registerModel.Username);
+        isLoading = true;
+        ErrorMessage = "Nothing Wrong yet";
+
+        try
+        {
+
+            var request = new
+            {
+                username = registerModel.Username,
+                password = registerModel.Password
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/accounts/register", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                ErrorMessage = $"Success! You're logged in as @{registerModel.Username}";
+                // NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                var error = await response.Content.ReadFromJsonAsync<ValidationErrorResponse>();
+
+                if (error?.Errors != null)
+                {
+                    ErrorMessage = string.Join("\n",
+                        error.Errors.SelectMany(e => e.Value ?? []));
+                }
+                else
+                {
+                    ErrorMessage = "Something went wrong.";
+                }
+            }
+            Console.WriteLine(ErrorMessage);
+        }
+        finally
+        {
+            isLoading = false; // ✅ ALWAYS resets
+        }
+    }
+
+    public class ValidationErrorResponse
+    {
+        public Dictionary<string, string[]> Errors { get; set; } = new();
+    }
+
+}
