@@ -90,7 +90,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        scriptures = (await ScriptureService.GetAllAsync()).ToList();
+        await RefreshScripturesAsync();
     }
 
     private void SelectScripture(Scripture scripture)
@@ -109,7 +109,7 @@ else
         userAttempt = string.Empty;
     }
 
-    private void CheckAttempt()
+    private async Task CheckAttempt()
     {
         if (selectedScripture is null)
         {
@@ -120,18 +120,33 @@ else
         var actual = NormalizeText(userAttempt);
         isCorrect = string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase);
         gameChecked = true;
+
+        await ScriptureService.RecordPracticeAsync(selectedScripture.Id, isCorrect);
+        if (isCorrect)
+        {
+            await ScriptureService.SetMemorizedAsync(selectedScripture.Id, true);
+        }
+
+        selectedScripture = await ScriptureService.GetByIdAsync(selectedScripture.Id) ?? selectedScripture;
+        await RefreshScripturesAsync();
     }
 
-    private void BackToList()
+    private async Task BackToList()
     {
         selectedScripture = null;
         gameStarted = false;
         gameChecked = false;
         userAttempt = string.Empty;
+        await RefreshScripturesAsync();
     }
 
     private static string NormalizeText(string text)
     {
         return text.Trim().Replace("\r\n", " ").Replace("\n", " ").Replace("  ", " ");
+    }
+
+    private async Task RefreshScripturesAsync()
+    {
+        scriptures = (await ScriptureService.GetAllAsync()).ToList();
     }
 }
