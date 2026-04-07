@@ -10,6 +10,7 @@ public sealed class VerseVaultDbContext : DbContext
     {
     }
 
+    public DbSet<User> Users { get; set; }
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
 
     public DbSet<PageClass> PageClasses => Set<PageClass>();

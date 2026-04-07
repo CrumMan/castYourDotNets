@@ -1,15 +1,43 @@
 using castYourDotNets.Data;
 using castYourDotNets.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
-
 
 namespace castYourDotNets;
 
 public static class SeedData
 {
-    public static void Initialize(VerseVaultDbContext context, string contentRootPath)
+    public static void Initialize(
+    VerseVaultDbContext verseContext,
+    AppDbContext appContext,
+    IPasswordHasher<User> hasher,
+    string contentRootPath)
     {
         Verse_Vault? vault = null;
+
+        // =========================
+        // 🔐 SEED USER ACCOUNT
+        // =========================
+        if (!appContext.Users.Any())
+        {
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = "test@test.com",
+                PasswordHash = HashPassword("Password123"),
+                CreatedAtUtc = DateTimeOffset.UtcNow
+            };
+
+            appContext.Users.Add(user);
+            Console.WriteLine("Seeded default user: test@test.com");
+        }
+
+        // =========================
+        // 📖 EXISTING SCRIPTURE SEED
+        // =========================
         var seedFiles = new[]
         {
             new
@@ -69,7 +97,7 @@ public static class SeedData
                             VerseText = verse.text,
                             Verse_Refrence = verse.Verse_Refrence ?? $"D&C {section.section}:{verse.verse}"
                         };
-                        context.VerseVaults.Add(vault);
+                        verseContext.VerseVaults.Add(vault);
                     }
                 }
             }
@@ -90,17 +118,29 @@ public static class SeedData
                                 VerseText = verse.text,
                                 Verse_Refrence = verse.Verse_Refrence ?? $"{book.book} {chapter.chapter}:{verse.verse}"
                             };
-                            context.VerseVaults.Add(vault);
+                            verseContext.VerseVaults.Add(vault);
                         }
                     }
                 }
             }
         }
 
-        context.SaveChanges();
+        verseContext.SaveChanges();
+
         if (vault != null)
         {
             Console.WriteLine($"Initialized, {vault.Verse_Refrence} was the last input reference.");
         }
+    }
+
+    // =========================
+    // 🔑 PASSWORD HASHING (MATCHES AuthService)
+    // =========================
+    private static string HashPassword(string password)
+    {
+        using var sha256 = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(password);
+        var hash = sha256.ComputeHash(bytes);
+        return Convert.ToBase64String(hash);
     }
 }

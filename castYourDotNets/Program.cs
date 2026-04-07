@@ -11,8 +11,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using castYourDotNets;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<ProtectedSessionStorage>();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=app.db"));
+
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // Fail fast if JWT settings are missing.
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
@@ -68,17 +75,29 @@ if (!app.Environment.IsDevelopment())
 // Ensure local schema exists for development; production should use migrations.
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<VerseVaultDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
-    //insert the values into database. if empty
-    if (!dbContext.VerseVaults.Any())
-    {
-        SeedData.Initialize(dbContext, builder.Environment.ContentRootPath);
-        Console.WriteLine("Verse vault seeded successfully.");
-    }
-    // creating the local schema have a database for the uneditable (after inital seed) of scripture_verses
-    await dbContext.Database.ExecuteSqlRawAsync(
-            """
+    var services = scope.ServiceProvider;
+
+    // ---------- APPLY MIGRATIONS FOR AUTH DB ----------
+    var appDb = services.GetRequiredService<AppDbContext>();
+    await appDb.Database.MigrateAsync(); // ensures auth tables exist
+
+    // ---------- ENSURE + SEED VERSE DB ----------
+    var verseDb = services.GetRequiredService<VerseVaultDbContext>();
+    var hasher = services.GetRequiredService<IPasswordHasher<User>>();
+
+    await appDb.Database.MigrateAsync();
+    await verseDb.Database.EnsureCreatedAsync();
+
+    SeedData.Initialize(
+        verseDb,
+        appDb,
+        hasher,
+        builder.Environment.ContentRootPath
+    );
+
+    // ---------- RAW TABLES ----------
+    await verseDb.Database.ExecuteSqlRawAsync(
+        """
         CREATE TABLE IF NOT EXISTS Scripture_Verses (
             Id TEXT NOT NULL PRIMARY KEY,
             Scripture TEXT NOT NULL,
@@ -89,8 +108,7 @@ using (var scope = app.Services.CreateScope())
         );
         """);
 
-
-    await dbContext.Database.ExecuteSqlRawAsync(
+    await verseDb.Database.ExecuteSqlRawAsync(
         """
         CREATE TABLE IF NOT EXISTS Scriptures (
             Id TEXT NOT NULL PRIMARY KEY,
@@ -106,7 +124,7 @@ using (var scope = app.Services.CreateScope())
         );
         """);
 
-    await dbContext.Database.ExecuteSqlRawAsync(
+    await verseDb.Database.ExecuteSqlRawAsync(
         """
         CREATE TABLE IF NOT EXISTS MemorizationEntries (
             Id TEXT NOT NULL PRIMARY KEY,
