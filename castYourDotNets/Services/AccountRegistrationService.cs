@@ -25,11 +25,11 @@ public sealed class AccountRegistrationService
         RegisterAccountRequest request,
         CancellationToken cancellationToken = default)
     {
-        var errors = Validate(request);
-        if (errors.Count > 0)
-        {
-            return AccountRegistrationResult.Failure(errors);
-        }
+        // var errors = await Validate(request);
+        // if (errors.Count > 0)
+        // {
+        //     return AccountRegistrationResult.Failure(errors);
+        // }
 
         var username = request.Username.Trim();
         var normalizedUsername = username.ToUpperInvariant();
@@ -55,12 +55,14 @@ public sealed class AccountRegistrationService
             // Persist only password hashes; never store plaintext passwords.
             var savedAccount = await accountRepository.AddAsync(account, cancellationToken);
 
-            return AccountRegistrationResult.Success(new AccountResponse
+            var User = AccountRegistrationResult.Success(new AccountResponse
             {
                 Id = savedAccount.Id,
                 Username = savedAccount.Username,
                 CreatedAtUtc = savedAccount.CreatedAtUtc
             });
+            System.Console.WriteLine($"This account has been registered with Id:{savedAccount.Id} Username:{savedAccount.Username}");
+            return User;
         }
         catch (DbUpdateException)
         {

@@ -1,4 +1,5 @@
 @page "/scriptures"
+@using System.Text.RegularExpressions
 @rendermode InteractiveServer
 @inject ScriptureService ScriptureService
 
@@ -110,7 +111,8 @@
                         </div>
                         <div class="button-row">
                             <button type="button" class="btn" @onclick="() => StartEdit(scripture)">Edit</button>
-                            <button type="button" class="btn danger" @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
+                            <button type="button" class="btn danger"
+                                    @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
                         </div>
                     </li>
                 }
@@ -237,7 +239,8 @@
         }
 
         currentScripture.Reference = currentVerse.Verse_Refrence;
-        currentScripture.Text = currentVerse.VerseText;
+        string cleanedVerseText = Regex.Replace(currentVerse.VerseText, @"\p{P}", "");
+        currentScripture.Text = cleanedVerseText;
     }
 
     private async Task SaveScripture()

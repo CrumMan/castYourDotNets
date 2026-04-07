@@ -5,8 +5,8 @@
 
 <h2 class="auth-title">Create Account</h2>
 
-<EditForm Model="model" OnValidSubmit="HandleRegister">
-    <DataAnnotationsValidator />
+<EditForm FormName="RegisterForm" Model="model" OnValidSubmit="HandleRegister">
+    @* <DataAnnotationsValidator /> *@
     <ValidationSummary />
 
     <div class="auth-container">
@@ -35,11 +35,11 @@
 </EditForm>
 
 @code {
-    private RegisterModel model = new() 
-    { 
-        Username = "", 
-        Password = "", 
-        ConfirmPassword = "" 
+    private RegisterModel model = new()
+    {
+        Username = "",
+        Password = "",
+        ConfirmPassword = ""
     };
 
     private async Task HandleRegister()
