@@ -1,4 +1,5 @@
 @page "/register"
+@rendermode InteractiveServer
 @using castYourDotNets.Contracts
 @inject AccountRegistrationService RegistrationService
 @inject NavigationManager Navigation
@@ -6,7 +7,7 @@
 <h2 class="auth-title">Create Account</h2>
 
 <EditForm FormName="RegisterForm" Model="model" OnValidSubmit="HandleRegister">
-    @* <DataAnnotationsValidator /> *@
+    <DataAnnotationsValidator />
     <ValidationSummary />
 
     <div class="auth-container">
