@@ -1,87 +1,145 @@
 @page "/memorize"
 @rendermode InteractiveServer
 @inject ScriptureService ScriptureService
+@inject AuthUiService AuthService
+@inject NavigationManager Navigation
 
 <PageTitle>Memorize</PageTitle>
 
-<h1>Memorize</h1>
+<div class="dashboard-page">
+    <section class="card dashboard-hero">
+        <div>
+            <p class="landing-eyebrow">Memorize</p>
+            <h1>Strengthen recall through repetition</h1>
+            <p class="helper-text">
+                Choose a saved verse, read it carefully, and then type it from memory to deepen retention.
+            </p>
+        </div>
 
-@if (selectedScripture is null)
-{
-    <section class="card">
-        <h2>Pick a Scripture to Memorize</h2>
-
-        @if (scriptures.Count == 0)
-        {
-            <p>No scriptures available. Add some on the Scriptures page first.</p>
-        }
-        else
-        {
-            <ul class="scripture-list">
-                @foreach (var scripture in scriptures)
-                {
-                    <li class="scripture-item">
-                        <p class="scripture-reference">@scripture.Reference</p>
-                        <p>@scripture.Text</p>
-                        <div class="button-row">
-                            <button type="button" class="btn primary" @onclick="() => SelectScripture(scripture)">Memorize This</button>
-                            <button type="button" class="btn danger" @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
-                        </div>
-                    </li>
-                }
-            </ul>
-        }
+        <div class="dashboard-actions">
+            <a class="btn" href="/dashboard">Open Dashboard</a>
+            <a class="btn primary" href="/practice">Quick Practice</a>
+        </div>
     </section>
-}
-else
-{
-    <section class="card memorize-card">
-        <h2>@selectedScripture.Reference</h2>
 
-        @if (!gameStarted)
-        {
-            <div class="practice-text">
-                <p>@selectedScripture.Text</p>
+    @if (selectedScripture is null)
+    {
+        <section class="card">
+            <div class="dashboard-card-header">
+                <div>
+                    <p class="landing-eyebrow">Select a verse</p>
+                    <h2>Pick a scripture to memorize</h2>
+                </div>
+
+                <span class="status-chip info">@scriptures.Count available</span>
             </div>
-            <p>Read the scripture above, then start the game when you are ready.</p>
-            <div class="button-row">
-                <button type="button" class="btn primary" @onclick="StartGame">Start Game</button>
-                <button type="button" class="btn" @onclick="BackToList">Back</button>
-                <button type="button" class="btn danger" @onclick="() => DeleteScripture(selectedScripture.Id)">Delete</button>
-            </div>
+
+            @if (scriptures.Count == 0)
+            {
+                <div class="empty-state">
+                    <p>No scriptures available yet. Add some on the Scriptures page first.</p>
+                    <div class="landing-actions">
+                        <a class="btn primary" href="/scriptures">Go to Scriptures</a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <ul class="scripture-list">
+                    @foreach (var scripture in scriptures)
+                    {
+                        <li class="scripture-item">
+                            <div class="scripture-item-top">
+                                <div>
+                                    <p class="scripture-reference">@scripture.Reference</p>
+                                    <p class="scripture-topic">@scripture.Book @scripture.Chapter:@scripture.VerseNumber</p>
+                                </div>
+
+                                <span class="status-chip @(scripture.IsMemorized ? "success" : "info")">
+                                    @(scripture.IsMemorized ? "Memorized" : "Ready")
+                                </span>
+                            </div>
+
+                            <p>@scripture.Text</p>
+
+                            <div class="button-row">
+                                <button type="button" class="btn primary" @onclick="() => SelectScripture(scripture)">Memorize
+                                    This</button>
+                                    <button type="button" class="btn danger"
+                                            @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
         }
-        else
+    else
         {
-            <p>Type the scripture from memory:</p>
+            <section class="card memorize-card dashboard-focus-card">
+                <div class="dashboard-card-header">
+                    <div>
+                        <p class="landing-eyebrow">Memorization focus</p>
+                        <h2>@selectedScripture.Reference</h2>
+                    </div>
 
-            <div class="form-field">
-                <textarea class="input textarea" @bind="userAttempt" disabled="@gameChecked"></textarea>
-            </div>
+                    <span class="status-chip @(selectedScripture.IsMemorized ? "success" : "info")">
+                        @(selectedScripture.IsMemorized ? "Memorized" : "In Progress")
+                    </span>
+                </div>
 
-            <div class="button-row">
-                @if (!gameChecked)
+                <div class="list-meta">
+                    <span>Attempts: @selectedScripture.PracticeCount</span>
+                    <span>Streak: @selectedScripture.CurrentStreakDays day(s)</span>
+                </div>
+
+                @if (!gameStarted)
                 {
-                    <button type="button" class="btn primary" @onclick="CheckAttempt">Check</button>
-                    <button type="button" class="btn" @onclick="StartGame">Reset</button>
+                    <div class="practice-text">
+                        <p>@selectedScripture.Text</p>
+                    </div>
+                    <p class="dashboard-note">Read the scripture above, then start when you are ready to type it from memory.</p>
+                    <div class="button-row">
+                        <button type="button" class="btn primary" @onclick="StartGame">Start Game</button>
+                        <button type="button" class="btn" @onclick="BackToList">Back</button>
+                        <button type="button" class="btn danger"
+                                @onclick="() => DeleteScripture(selectedScripture.Id)">Delete</button>
+                    </div>
                 }
                 else
                 {
-                    <button type="button" class="btn primary" @onclick="StartGame">Try Again</button>
-                    <button type="button" class="btn" @onclick="() => SelectScripture(selectedScripture)">Read Again</button>
-                }
-                <button type="button" class="btn" @onclick="BackToList">Back</button>
-                <button type="button" class="btn danger" @onclick="() => DeleteScripture(selectedScripture.Id)">Delete</button>
-            </div>
+                    <p>Type the scripture from memory:</p>
 
-            @if (gameChecked)
-            {
-                <div class="memorize-result @(isCorrect ? "result-correct" : "result-incorrect")">
-                    <p>@(isCorrect ? "You got it right!" : "Not quite. Keep practicing!")</p>
-                </div>
-            }
+                    <div class="form-field">
+                        <textarea class="input textarea" @bind="userAttempt" disabled="@gameChecked"></textarea>
+                    </div>
+
+                    <div class="button-row">
+                        @if (!gameChecked)
+                        {
+                            <button type="button" class="btn primary" @onclick="CheckAttempt">Check</button>
+                            <button type="button" class="btn" @onclick="StartGame">Reset</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn primary" @onclick="StartGame">Try Again</button>
+                            <button type="button" class="btn" @onclick="() => SelectScripture(selectedScripture)">Read Again</button>
+                        }
+                        <button type="button" class="btn" @onclick="BackToList">Back</button>
+                        <button type="button" class="btn danger"
+                                @onclick="() => DeleteScripture(selectedScripture.Id)">Delete</button>
+                    </div>
+
+                    @if (gameChecked)
+                    {
+                        <div class="memorize-result @(isCorrect ? "result-correct" : "result-incorrect")">
+                            <p>@(isCorrect ? "You got it right!" : "Not quite. Keep practicing!")</p>
+                        </div>
+                    }
+                }
+            </section>
         }
-    </section>
-}
+    </div>
 
 @code {
     private List<Scripture> scriptures = [];
@@ -93,6 +151,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/signin");
+            return;
+        }
+
         await RefreshScripturesAsync();
     }
 

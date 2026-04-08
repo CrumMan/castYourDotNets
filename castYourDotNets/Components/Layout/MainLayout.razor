@@ -1,18 +1,17 @@
 @inherits LayoutComponentBase
 
-<div class="app-shell @(isDarkMode ? "theme-dark" : "theme-light")">
+<div class="app-shell @(isDarkTheme ? "theme-dark" : string.Empty)">
     <button type="button"
-            class="theme-toggle @(isDarkMode ? "is-dark" : "is-light")"
+            class="theme-toggle @(isDarkTheme ? "is-dark" : string.Empty)"
             @onclick="ToggleTheme"
-            aria-label="Switch to @(isDarkMode ? "light" : "dark") mode"
-            title="Switch to @(isDarkMode ? "light" : "dark") mode">
-        <span class="theme-toggle-track" aria-hidden="true">
+            aria-label="Toggle color theme">
+        <span class="theme-toggle-track">
             <span class="theme-toggle-background theme-toggle-background-day"></span>
             <span class="theme-toggle-background theme-toggle-background-night"></span>
-        </span>
-        <span class="theme-toggle-thumb" aria-hidden="true">
-            <span class="theme-toggle-icon theme-toggle-icon-sun"></span>
-            <span class="theme-toggle-icon theme-toggle-icon-moon"></span>
+            <span class="theme-toggle-thumb">
+                <span class="theme-toggle-icon theme-toggle-icon-sun"></span>
+                <span class="theme-toggle-icon theme-toggle-icon-moon"></span>
+            </span>
         </span>
     </button>
 
@@ -28,10 +27,10 @@
 </div>
 
 @code {
-    private bool isDarkMode;
+    private bool isDarkTheme;
 
     private void ToggleTheme()
     {
-        isDarkMode = !isDarkMode;
+        isDarkTheme = !isDarkTheme;
     }
 }

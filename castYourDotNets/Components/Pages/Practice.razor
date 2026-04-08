@@ -1,51 +1,85 @@
 @page "/practice"
 @rendermode InteractiveServer
 @inject ScriptureService ScriptureService
+@inject AuthUiService AuthService
+@inject NavigationManager Navigation
 
 <PageTitle>Practice</PageTitle>
 
-<h1>Practice</h1>
-
-@if (currentScripture is null)
-{
-    <section class="card">
-        <p>No scriptures available for practice. Add one in the Scriptures page.</p>
-    </section>
-}
-else
-{
-    <section class="card practice-card">
-        <p class="scripture-reference">@currentScripture.Reference</p>
-
-        <p class="scripture-topic">@currentScripture.Book @currentScripture.Chapter:@currentScripture.VerseNumber</p>
-
-        <div class="practice-text">
-            @if (showText)
-            {
-                <p>@currentScripture.Text</p>
-            }
-            else
-            {
-                <p>Try to recite this verse from memory, then reveal text to self-check.</p>
-            }
+<div class="dashboard-page">
+    <section class="card dashboard-hero">
+        <div>
+            <p class="landing-eyebrow">Practice mode</p>
+            <h1>Review one verse at a time</h1>
+            <p class="helper-text">
+                Reveal the text when needed, record how you did, and keep your streak alive through steady repetition.
+            </p>
         </div>
 
-        <div class="button-row">
-            <button type="button" class="btn" @onclick="RevealText">Reveal Text</button>
-            <button type="button" class="btn primary" @onclick="MarkSuccess">I Got It</button>
-            <button type="button" class="btn danger" @onclick="MarkNeedsWork">Need Work</button>
-            <button type="button" class="btn" @onclick="ToggleMemorized">
-                @(currentScripture.IsMemorized ? "Mark Unmemorized" : "Mark Memorized")
-            </button>
-            <button type="button" class="btn" @onclick="LoadNextAsync">Next Verse</button>
+        <div class="dashboard-actions">
+            <a class="btn" href="/dashboard">Open Dashboard</a>
+            <button type="button" class="btn primary" @onclick="LoadNextAsync">Load Another Verse</button>
         </div>
-
-        @if (!string.IsNullOrWhiteSpace(feedback))
-        {
-            <p class="practice-feedback">@feedback</p>
-        }
     </section>
-}
+
+    @if (currentScripture is null)
+    {
+        <section class="card empty-state">
+            <h2>No scriptures available for practice yet</h2>
+            <p>Add a scripture on the Scriptures page first, then return here to begin your review session.</p>
+            <div class="landing-actions">
+                <a class="btn primary" href="/scriptures">Go to Scriptures</a>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="card practice-card dashboard-focus-card">
+            <div class="dashboard-card-header">
+                <div>
+                    <p class="landing-eyebrow">Current focus verse</p>
+                    <p class="scripture-reference">@currentScripture.Reference</p>
+                    <p class="scripture-topic">@currentScripture.Book @currentScripture.Chapter:@currentScripture.VerseNumber</p>
+                </div>
+
+                <span class="status-chip @(currentScripture.IsMemorized ? "success" : "info")">
+                    @(currentScripture.IsMemorized ? "Memorized" : "In Progress")
+                </span>
+            </div>
+
+            <div class="list-meta">
+                <span>Attempts: @currentScripture.PracticeCount</span>
+                <span>Streak: @currentScripture.CurrentStreakDays day(s)</span>
+            </div>
+
+            <div class="practice-text">
+                @if (showText)
+                {
+                    <p>@currentScripture.Text</p>
+                }
+                else
+                {
+                    <p>Try to recite this verse from memory, then reveal the text to self-check your accuracy.</p>
+                }
+            </div>
+
+            <div class="button-row">
+                <button type="button" class="btn" @onclick="RevealText">Reveal Text</button>
+                <button type="button" class="btn primary" @onclick="MarkSuccess">I Got It</button>
+                <button type="button" class="btn danger" @onclick="MarkNeedsWork">Need Work</button>
+                <button type="button" class="btn" @onclick="ToggleMemorized">
+                    @(currentScripture.IsMemorized ? "Mark Unmemorized" : "Mark Memorized")
+                </button>
+                <button type="button" class="btn" @onclick="LoadNextAsync">Next Verse</button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(feedback))
+            {
+                <p class="practice-feedback">@feedback</p>
+            }
+        </section>
+    }
+</div>
 
 @code {
     private Scripture? currentScripture;
@@ -54,6 +88,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/signin");
+            return;
+        }
+
         await LoadNextAsync();
     }
 

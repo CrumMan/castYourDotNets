@@ -1,0 +1,139 @@
+@using System.ComponentModel.DataAnnotations
+@page "/signin"
+@rendermode InteractiveServer
+@inject AuthUiService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Sign In | Verse Vault</PageTitle>
+
+<div class="auth-shell">
+    <section class="card auth-panel">
+        <div class="auth-header">
+            <p class="landing-eyebrow">Welcome back</p>
+            <h1>Sign in to continue your scripture journey</h1>
+            <p class="auth-lead">
+                Return to your saved verses, daily practice, and memorization progress in one peaceful place.
+            </p>
+        </div>
+
+        @if (AuthService.IsAuthenticated)
+        {
+            <div class="auth-state">
+                <p>You’re signed in as <strong>@AuthService.CurrentUsername</strong>.</p>
+            </div>
+
+            <div class="landing-actions">
+                <a class="btn primary" href="/scriptures">Go to Scriptures</a>
+                <button type="button" class="btn" @onclick="HandleSignOut">Use another account</button>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="model" OnValidSubmit="HandleSubmitAsync" FormName="SignInForm" class="auth-form">
+                <DataAnnotationsValidator />
+
+                <div class="auth-field">
+                    <label for="signin-username">Username</label>
+                    <InputText id="signin-username" class="input" @bind-Value="model.Username" />
+                    <ValidationMessage For="() => model.Username" />
+                </div>
+
+                <div class="auth-field">
+                    <label for="signin-password">Password</label>
+                    <div class="password-row">
+                        <InputText id="signin-password" class="input" type="@(showPassword ? "text" : "password")" @bind-Value="model.Password" />
+                        <button type="button" class="btn auth-toggle" @onclick="TogglePassword">
+                            @(showPassword ? "Hide" : "Show")
+                        </button>
+                    </div>
+                    <ValidationMessage For="() => model.Password" />
+                </div>
+
+                @if (errorMessages.Count > 0)
+                {
+                    <div class="auth-errors">
+                        <ul>
+                            @foreach (var message in FlattenErrors())
+                            {
+                                <li>@message</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <div class="landing-actions auth-actions">
+                    <button type="submit" class="btn primary" disabled="@isSubmitting">
+                        @(isSubmitting ? "Signing In..." : "Sign In")
+                    </button>
+                    <a class="btn" href="/signup">Create Account</a>
+                </div>
+
+                <p class="auth-link-row">
+                    New to Verse Vault? <a href="/signup">Start with a free account</a>.
+                </p>
+            </EditForm>
+        }
+    </section>
+
+    <aside class="card auth-aside">
+        <p class="landing-eyebrow">Why sign in?</p>
+        <h2>Keep your memorization journey focused and personal.</h2>
+        <ul class="auth-benefits">
+            <li>Save scriptures that matter most to you</li>
+            <li>Practice consistently and track your growth</li>
+            <li>Build a stronger daily habit of scripture study</li>
+        </ul>
+
+        <blockquote class="card quote-card quote-card-featured">
+            <p>“A memorized scripture becomes an enduring friend that does not weaken with the passage of time.”</p>
+            <footer>— Elder Richard G. Scott</footer>
+        </blockquote>
+    </aside>
+</div>
+
+@code {
+    private readonly SignInModel model = new();
+    private Dictionary<string, string[]> errorMessages = [];
+    private bool isSubmitting;
+    private bool showPassword;
+
+    private async Task HandleSubmitAsync()
+    {
+        isSubmitting = true;
+        errorMessages = [];
+
+        var result = await AuthService.LoginAsync(model.Username, model.Password);
+
+        isSubmitting = false;
+
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo("/scriptures");
+            return;
+        }
+
+        errorMessages = result.Errors;
+    }
+
+    private void TogglePassword()
+    {
+        showPassword = !showPassword;
+    }
+
+    private void HandleSignOut()
+    {
+        AuthService.SignOut();
+        errorMessages = [];
+    }
+
+    private IEnumerable<string> FlattenErrors() => errorMessages.SelectMany(entry => entry.Value);
+
+    private sealed class SignInModel
+    {
+        [Required(ErrorMessage = "Username is required.")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required.")]
+        public string Password { get; set; } = string.Empty;
+    }
+}

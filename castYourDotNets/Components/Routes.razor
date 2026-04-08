@@ -1,12 +1,13 @@
-@rendermode InteractiveServer
+@using castYourDotNets.Components.Layout
+@using castYourDotNets.Components.Pages
 
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
     <NotFound>
-        <LayoutView Layout="typeof(Layout.MainLayout)">
+        <LayoutView Layout="typeof(MainLayout)">
             <castYourDotNets.Components.Pages.NotFound />
         </LayoutView>
     </NotFound>

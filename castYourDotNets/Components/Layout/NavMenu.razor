@@ -1,24 +1,77 @@
+@implements IDisposable
+@inject AuthUiService AuthService
+@inject NavigationManager Navigation
+
 <nav>
-    <h2 class="nav-title">castYourDotNets</h2>
+    <h2 class="nav-title">Verse Vault</h2>
+    <p class="nav-subtitle">
+        @(AuthService.IsAuthenticated ? $"Signed in as {AuthService.CurrentUsername}" : "Public landing page")
+    </p>
 
     <ul class="nav-list">
-        <li>
-            <NavLink href="/" Match="NavLinkMatch.All">Home</NavLink>
-        </li>
-        <li>
-            <NavLink href="/scriptures">Scriptures</NavLink>
-        </li>
-        <li>
-            <NavLink href="/memorize">Memorize</NavLink>
-        </li>
-        <li>
-            <NavLink href="/practice">Practice</NavLink>
-        </li>
-        <li>
-            <NavLink href="/progress">Progress</NavLink>
-        </li>
-        <li>
-            <NavLink href="/about">About</NavLink>
-        </li>
+        @if (!AuthService.IsAuthenticated)
+        {
+            <li>
+                <NavLink href="/" Match="NavLinkMatch.All">Home</NavLink>
+            </li>
+        }
+
+        @if (!AuthService.IsAuthenticated)
+        {
+            <li>
+                <NavLink href="/about">About</NavLink>
+            </li>
+        }
+
+        @if (AuthService.IsAuthenticated)
+        {
+            <li>
+                <NavLink href="/scriptures">Scriptures</NavLink>
+            </li>
+            <li>
+                <NavLink href="/memorize">Memorize</NavLink>
+            </li>
+            <li>
+                <NavLink href="/practice">Practice</NavLink>
+            </li>
+            <li>
+                <NavLink href="/dashboard">Progress/Dashboard</NavLink>
+            </li>
+            <li>
+                <button type="button" class="nav-action" @onclick="HandleSignOut">Sign Out</button>
+            </li>
+        }
+        else
+        {
+            <li>
+                <NavLink href="/signin">Sign In</NavLink>
+            </li>
+            <li>
+                <NavLink href="/signup">Sign Up</NavLink>
+            </li>
+        }
     </ul>
 </nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthService.AuthenticationStateChanged += OnAuthenticationStateChanged;
+    }
+
+    private void OnAuthenticationStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleSignOut()
+    {
+        AuthService.SignOut();
+        Navigation.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        AuthService.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+    }
+}

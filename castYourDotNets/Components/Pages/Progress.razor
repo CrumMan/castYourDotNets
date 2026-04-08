@@ -1,56 +1,94 @@
+@page "/dashboard"
 @page "/progress"
+@rendermode InteractiveServer
 @inject ScriptureService ScriptureService
+@inject AuthUiService AuthService
+@inject NavigationManager Navigation
 
-<PageTitle>Progress</PageTitle>
+<PageTitle>Dashboard</PageTitle>
 
-<h1>Progress</h1>
+<div class="dashboard-page">
+    <section class="card dashboard-hero">
+        <div>
+            <p class="landing-eyebrow">Signed-in dashboard</p>
+            <h1>Welcome back, @(AuthService.CurrentUsername ?? "Friend")</h1>
+            <p class="helper-text">
+                Track your memorization progress, monitor your streaks, and choose your next best study step.
+            </p>
+        </div>
 
-@if (scriptures.Count == 0)
-{
-    <section class="card">
-        <p>No data yet. Add scriptures to start tracking progress.</p>
-    </section>
-}
-else
-{
-    <section class="stats-grid">
-        <article class="card stat-card">
-            <p class="stat-label">Total Scriptures</p>
-            <p class="stat-value">@totalScriptures</p>
-        </article>
-        <article class="card stat-card">
-            <p class="stat-label">Memorized</p>
-            <p class="stat-value">@memorizedCount</p>
-        </article>
-        <article class="card stat-card">
-            <p class="stat-label">Practiced</p>
-            <p class="stat-value">@practicedCount</p>
-        </article>
-        <article class="card stat-card">
-            <p class="stat-label">Total Practice Attempts</p>
-            <p class="stat-value">@totalPracticeCount</p>
-        </article>
+        <div class="dashboard-actions">
+            <a class="btn primary" href="/practice">Practice Now</a>
+            <a class="btn" href="/scriptures">Add Scripture</a>
+        </div>
     </section>
 
-    <section class="card">
-        <h2>Scripture Status</h2>
-        <ul class="scripture-list">
-            @foreach (var scripture in scriptures.OrderByDescending(s => s.PracticeCount).ThenBy(s => s.Reference))
-            {
-                <li class="scripture-item">
-                    <div>
-                        <p class="scripture-reference">@scripture.Reference</p>
-                        <p class="scripture-topic">Attempts: @scripture.PracticeCount</p>
-                        <p class="scripture-topic">Current Streak: @scripture.CurrentStreakDays day(s)</p>
-                        <p class="scripture-topic">
-                            Status: @(scripture.IsMemorized ? "Memorized" : "In Progress")
-                        </p>
-                    </div>
-                </li>
-            }
-        </ul>
-    </section>
-}
+    @if (scriptures.Count == 0)
+    {
+        <section class="card empty-state">
+            <h2>Your dashboard is ready</h2>
+            <p>Start by adding your first scripture, then come back here to watch your progress grow over time.</p>
+            <div class="landing-actions">
+                <a class="btn primary" href="/scriptures">Add Your First Scripture</a>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="dashboard-stats-grid">
+            <article class="card summary-card">
+                <p class="summary-label">Total Scriptures</p>
+                <p class="summary-number">@totalScriptures</p>
+            </article>
+            <article class="card summary-card">
+                <p class="summary-label">Memorized</p>
+                <p class="summary-number">@memorizedCount</p>
+            </article>
+            <article class="card summary-card">
+                <p class="summary-label">Practice Attempts</p>
+                <p class="summary-number">@totalPracticeCount</p>
+            </article>
+            <article class="card summary-card">
+                <p class="summary-label">Best Streak</p>
+                <p class="summary-number">@bestStreak</p>
+            </article>
+        </section>
+
+        <section class="card">
+            <div class="dashboard-card-header">
+                <div>
+                    <p class="landing-eyebrow">Progress overview</p>
+                    <h2>Scripture status</h2>
+                </div>
+
+                <span class="status-chip info">@completionRate% memorized</span>
+            </div>
+
+            <ul class="scripture-list">
+                @foreach (var scripture in scriptures.OrderByDescending(s => s.PracticeCount).ThenBy(s => s.Reference))
+                {
+                    <li class="scripture-item">
+                        <div class="scripture-item-top">
+                            <div>
+                                <p class="scripture-reference">@scripture.Reference</p>
+                                <p class="scripture-topic">@scripture.Book @scripture.Chapter:@scripture.VerseNumber</p>
+                            </div>
+
+                            <span class="status-chip @(scripture.IsMemorized ? "success" : "info")">
+                                @(scripture.IsMemorized ? "Memorized" : "In Progress")
+                            </span>
+                        </div>
+
+                        <div class="list-meta">
+                            <span>Attempts: @scripture.PracticeCount</span>
+                            <span>Current streak: @scripture.CurrentStreakDays day(s)</span>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+</div>
 
 @code {
     private List<Scripture> scriptures = [];
@@ -59,9 +97,17 @@ else
     private int memorizedCount;
     private int practicedCount;
     private int totalPracticeCount;
+    private int bestStreak;
+    private int completionRate;
 
     protected override async Task OnInitializedAsync()
     {
+        if (!AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/signin");
+            return;
+        }
+
         await RefreshAsync();
     }
 
@@ -77,5 +123,7 @@ else
         memorizedCount = scriptures.Count(s => s.IsMemorized);
         practicedCount = scriptures.Count(s => s.PracticeCount > 0);
         totalPracticeCount = scriptures.Sum(s => s.PracticeCount);
+        bestStreak = scriptures.Count == 0 ? 0 : scriptures.Max(s => s.CurrentStreakDays);
+        completionRate = totalScriptures == 0 ? 0 : (int)Math.Round(memorizedCount * 100d / totalScriptures);
     }
 }

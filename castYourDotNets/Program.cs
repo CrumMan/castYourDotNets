@@ -29,15 +29,15 @@ builder.Services.AddScoped<IPasswordHasher<UserAccount>, PasswordHasher<UserAcco
 builder.Services.AddScoped<AccountRegistrationService>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<AuthUiService>();
+builder.Services.AddScoped<ScriptureService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-builder.Services.AddHttpClient(nameof(ScriptureService));
-builder.Services.AddScoped<ScriptureService>();
-// build the api address to pull values for scripture
-builder.Services.AddHttpClient<ScriptureService>(client =>
+builder.Services.AddHttpClient(nameof(ScriptureService), client =>
 {
     client.BaseAddress = new Uri("http://localhost:5076");
 });
+builder.Services.AddHttpClient(nameof(AuthUiService));
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

@@ -1,7 +1,151 @@
 @page "/"
+@rendermode InteractiveServer
+@inject AuthUiService AuthService
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Verse Vault | Home</PageTitle>
 
-<h1>castYourDotNets</h1>
-<p>Everything in this app runs as Blazor pages and components.</p>
-<p>Use the navigation to move between pages while we build features.</p>
+<div class="landing-page">
+    <section class="card landing-hero">
+        <div class="landing-copy">
+            <p class="landing-eyebrow">Welcome to Verse Vault</p>
+            <h1>Hide the word of God in your heart, one verse at a time.</h1>
+            <p class="landing-lead">
+                Verse Vault is a modern scripture memorization app designed to help you save meaningful passages,
+                practice them consistently, and grow in faith through daily repetition and reflection.
+            </p>
+
+            <div class="landing-actions">
+                @if (AuthService.IsAuthenticated)
+                {
+                    <a class="btn primary" href="/scriptures">Continue to Scriptures</a>
+                    <a class="btn" href="/progress">View Progress</a>
+                }
+                else
+                {
+                    <a class="btn primary" href="/signup">Create Account</a>
+                    <a class="btn" href="/signin">Sign In</a>
+                }
+            </div>
+
+            <div class="landing-pill-row">
+                <span class="landing-pill">Scripture-focused</span>
+                <span class="landing-pill">Daily practice</span>
+                <span class="landing-pill">Progress tracking</span>
+            </div>
+        </div>
+
+        <aside class="landing-spotlight">
+            <p class="landing-spotlight-label">App Purpose</p>
+            <h2>Build a lasting habit of remembering Christ through His word.</h2>
+            <p>
+                Save scriptures that matter to you, review them often, and turn small moments of study into enduring
+                spiritual strength.
+            </p>
+        </aside>
+    </section>
+
+    <section class="landing-section">
+        <div class="landing-section-heading">
+            <p class="landing-eyebrow">Why it matters</p>
+            <h2>A faith-centered tool for meaningful memorization</h2>
+            <p>
+                This app helps you move beyond simply reading a verse once. It gives you a focused place to collect,
+                revisit, and internalize scriptures that strengthen your testimony and guide your daily life.
+            </p>
+        </div>
+
+        <div class="landing-feature-grid">
+            <article class="card landing-feature-card">
+                <h3>📖 Save important verses</h3>
+                <p>Keep scriptures you love in one place and organize them for easy review.</p>
+            </article>
+
+            <article class="card landing-feature-card">
+                <h3>🧠 Practice with purpose</h3>
+                <p>Use memorization and practice flows to strengthen recall a little each day.</p>
+            </article>
+
+            <article class="card landing-feature-card">
+                <h3>📈 Track steady progress</h3>
+                <p>Measure streaks, practice counts, and milestones as your confidence grows.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="landing-section">
+        <div class="landing-section-heading">
+            <p class="landing-eyebrow">Words of encouragement</p>
+            <h2>Quotes from Apostles on scripture memorization</h2>
+            <p>These teachings remind us that treasured verses can become lifelong companions.</p>
+        </div>
+
+        <div class="quote-grid">
+            <blockquote class="card quote-card">
+                <p>“Great power can come from memorizing scriptures. To memorize a scripture is to forge a new
+                    friendship.”</p>
+                    <footer>— Elder Richard G. Scott</footer>
+                </blockquote>
+
+                <blockquote class="card quote-card">
+                    <p>“A memorized scripture becomes an enduring friend that does not weaken with the passage of time.”</p>
+                    <footer>— Elder Richard G. Scott</footer>
+                </blockquote>
+
+                <blockquote class="card quote-card">
+                    <p>“I suggest that you memorize scriptures that touch your heart and fill your soul with understanding.
+                        When scriptures are used as the Lord has caused them to be recorded, they have intrinsic power that
+                        is not communicated when paraphrased.”</p>
+                        <footer>— Elder Richard G. Scott</footer>
+                    </blockquote>
+
+                    <blockquote class="card quote-card">
+                        <p>“I would encourage you to find the scriptures that you really believe in, that make a difference in
+                            your life... You put them deeply in your heart.”</p>
+                            <footer>— Elder Neil L. Andersen</footer>
+                        </blockquote>
+
+                        <blockquote class="card quote-card">
+                            <p>“I think it is very helpful if you begin today to learn a few of the teachings of Jesus Christ and
+                                have them in your memory.”</p>
+                                <footer>— Elder Neil L. Andersen</footer>
+                            </blockquote>
+
+                            <blockquote class="card quote-card">
+                                <p>“Over the last quarter century this testimony [The Living Christ] has been read, studied and even
+                                    memorized by countless disciples of Jesus Christ.”</p>
+                                    <footer>— President Russell M. Nelson</footer>
+                                </blockquote>
+
+                                <blockquote class="card quote-card">
+                                    <p>“We would first put in place the things that make it possible always to remember Him—frequent prayer,
+                                        studying and pondering the scriptures.”</p>
+                                        <footer>— Elder D. Todd Christofferson</footer>
+                                    </blockquote>
+                                </div>
+                            </section>
+
+                            <section class="landing-section">
+                                <div class="card landing-cta">
+                                    <div>
+                                        <p class="landing-eyebrow">Begin today</p>
+                                        <h2>Choose one scripture. Practice it daily. Let it change you.</h2>
+                                        <p>
+                                            Start with a verse that touches your heart, then return often until it becomes part of who you are.
+                                        </p>
+                                    </div>
+
+                                    <div class="landing-actions">
+                                        @if (AuthService.IsAuthenticated)
+                                        {
+                                            <a class="btn primary" href="/memorize">Open Memorize</a>
+                                            <a class="btn" href="/practice">Practice Now</a>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn primary" href="/signup">Create Your Account</a>
+                                            <a class="btn" href="/signin">I Already Have an Account</a>
+                                        }
+                                    </div>
+                                </div>
+                            </section>
+                        </div>

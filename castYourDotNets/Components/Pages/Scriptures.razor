@@ -2,99 +2,130 @@
 @page "/scriptures"
 @rendermode InteractiveServer
 @inject ScriptureService ScriptureService
+@inject AuthUiService AuthService
+@inject NavigationManager Navigation
 
 <PageTitle>Scriptures</PageTitle>
 
-<h1>Scriptures</h1>
+<div class="dashboard-page">
+    <section class="card dashboard-hero">
+        <div>
+            <p class="landing-eyebrow">Scripture library</p>
+            <h1>Build your memorization collection</h1>
+            <p class="helper-text">
+                Choose a passage, save it to your list, and prepare it for daily review and memorization.
+            </p>
+        </div>
 
-<div class="scriptures-grid">
-    <section class="card">
-        <h2>@(isEditing ? "Edit Scripture" : "Add Scripture")</h2>
-
-        <EditForm Model="currentScripture" OnSubmit="SaveScripture" FormName="ScriptureForm">
-
-            <div class="form-field">
-                <label>Scripture</label>
-                <select class="input" @bind="selectedScriptureSource" @bind:after="OnScriptureSourceChanged">
-                    @foreach (var s in Enum.GetValues(typeof(Verse_Vault.Scripture)))
-                    {
-                        <option value="@s">@FormatEnumDisplay(s.ToString())</option>
-                    }
-                </select>
-            </div>
-
-            <div class="form-field">
-                <label>Book</label>
-                <select class="input" @bind="selectedBook" @bind:after="OnBookChanged">
-                    @foreach (var book in books)
-                    {
-                        <option value="@book">@book</option>
-                    }
-                </select>
-            </div>
-
-            <div class="form-field">
-                <label>Chapter</label>
-                <select class="input" @bind="selectedChapter" @bind:after="OnChapterChanged">
-                    @foreach (var chap in chapters)
-                    {
-                        <option value="@chap">@chap</option>
-                    }
-                </select>
-            </div>
-
-            <div class="form-field">
-                <label>Verse</label>
-                <select class="input" @bind="selectedVerse" @bind:after="OnVerseChanged">
-                    @foreach (var v in verses)
-                    {
-                        <option value="@v">@v</option>
-                    }
-                </select>
-            </div>
-
-            <div class="form-field">
-                <label>Text</label>
-                <textarea class="input textarea" readonly>@CleanVerseText</textarea>
-            </div>
-
-            <div class="button-row">
-                <button type="submit" class="btn primary">@(isEditing ? "Update" : "Add")</button>
-                @if (isEditing)
-                {
-                    <button type="button" class="btn" @onclick="CancelEdit">Cancel</button>
-                }
-            </div>
-        </EditForm>
+        <div class="dashboard-actions">
+            <span class="status-chip info">@scriptures.Count saved</span>
+            <a class="btn" href="/dashboard">Open Dashboard</a>
+        </div>
     </section>
 
-    <section class="card">
-        <h2>Saved Scriptures</h2>
+    <div class="scriptures-grid">
+        <section class="card">
+            <h2>@(isEditing ? "Edit Scripture" : "Add Scripture")</h2>
 
-        @if (scriptures.Count == 0)
-        {
-            <p>No scriptures saved yet.</p>
-        }
-        else
-        {
-            <ul class="scripture-list">
-                @foreach (var scripture in scriptures)
-                {
-                    <li class="scripture-item">
-                        <div>
-                            <p class="scripture-reference">@scripture.Reference</p>
+            <EditForm Model="currentScripture" OnSubmit="SaveScripture" FormName="ScriptureForm">
+                <div class="form-field">
+                    <label>Scripture</label>
+                    <select class="input" @bind="selectedScriptureSource" @bind:after="OnScriptureSourceChanged">
+                        @foreach (var s in Enum.GetValues(typeof(Verse_Vault.Scripture)))
+                        {
+                            <option value="@s">@FormatEnumDisplay($"{s}")</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Book</label>
+                    <select class="input" @bind="selectedBook" @bind:after="OnBookChanged">
+                        @foreach (var book in books)
+                        {
+                            <option value="@book">@book</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Chapter</label>
+                    <select class="input" @bind="selectedChapter" @bind:after="OnChapterChanged">
+                        @foreach (var chap in chapters)
+                        {
+                            <option value="@chap">@chap</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Verse</label>
+                    <select class="input" @bind="selectedVerse" @bind:after="OnVerseChanged">
+                        @foreach (var v in verses)
+                        {
+                            <option value="@v">@v</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Text</label>
+                    <textarea class="input textarea" readonly>@CleanVerseText</textarea>
+                </div>
+
+                <div class="button-row">
+                    <button type="submit" class="btn primary">@(isEditing ? "Update" : "Add")</button>
+                    @if (isEditing)
+                    {
+                        <button type="button" class="btn" @onclick="CancelEdit">Cancel</button>
+                    }
+                </div>
+            </EditForm>
+        </section>
+
+        <section class="card">
+            <div class="dashboard-card-header">
+                <div>
+                    <h2>Saved Scriptures</h2>
+                    <p class="scripture-topic">Memorized so far: @MemorizedCount</p>
+                </div>
+            </div>
+
+            @if (scriptures.Count == 0)
+            {
+                <div class="empty-state">
+                    <p>No scriptures saved yet. Use the form to add your first one.</p>
+                </div>
+            }
+            else
+            {
+                <ul class="scripture-list">
+                    @foreach (var scripture in scriptures)
+                    {
+                        <li class="scripture-item">
+                            <div class="scripture-item-top">
+                                <div>
+                                    <p class="scripture-reference">@scripture.Reference</p>
+                                    <p class="scripture-topic">@scripture.Book @scripture.Chapter:@scripture.VerseNumber</p>
+                                </div>
+
+                                <span class="status-chip @(scripture.IsMemorized ? "success" : "info")">
+                                    @(scripture.IsMemorized ? "Memorized" : "In Progress")
+                                </span>
+                            </div>
+
                             <p>@scripture.Text</p>
-                        </div>
-                        <div class="button-row">
-                            <button type="button" class="btn" @onclick="() => StartEdit(scripture)">Edit</button>
-                            <button type="button" class="btn danger"
-                                    @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
-                        </div>
-                    </li>
-                }
-            </ul>
-        }
-    </section>
+
+                            <div class="button-row">
+                                <button type="button" class="btn" @onclick="() => StartEdit(scripture)">Edit</button>
+                                <button type="button" class="btn danger" @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
 </div>
 
 @code {
@@ -113,6 +144,8 @@
     private List<Scripture> scriptures = [];
     private Scripture currentScripture = new();
     private bool isEditing;
+
+    private int MemorizedCount => scriptures.Count(s => s.IsMemorized);
 
     private Verse_Vault.Scripture? SelectedScriptureEnum =>
         Enum.TryParse<Verse_Vault.Scripture>(selectedScriptureSource, out var parsed) ? parsed : null;
@@ -133,7 +166,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        allVerses = await ScriptureService.GetAllVersesAsync();
+        if (!AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/signin");
+            return;
+        }
+
+        allVerses = (await ScriptureService.GetAllVersesAsync()).ToList();
         RefreshBooks();
         await RefreshScripturesAsync();
     }
