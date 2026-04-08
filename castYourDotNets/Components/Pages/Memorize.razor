@@ -25,6 +25,7 @@
                         <p>@scripture.Text</p>
                         <div class="button-row">
                             <button type="button" class="btn primary" @onclick="() => SelectScripture(scripture)">Memorize This</button>
+                            <button type="button" class="btn danger" @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
                         </div>
                     </li>
                 }
@@ -46,6 +47,7 @@ else
             <div class="button-row">
                 <button type="button" class="btn primary" @onclick="StartGame">Start Game</button>
                 <button type="button" class="btn" @onclick="BackToList">Back</button>
+                <button type="button" class="btn danger" @onclick="() => DeleteScripture(selectedScripture.Id)">Delete</button>
             </div>
         }
         else
@@ -68,6 +70,7 @@ else
                     <button type="button" class="btn" @onclick="() => SelectScripture(selectedScripture)">Read Again</button>
                 }
                 <button type="button" class="btn" @onclick="BackToList">Back</button>
+                <button type="button" class="btn danger" @onclick="() => DeleteScripture(selectedScripture.Id)">Delete</button>
             </div>
 
             @if (gameChecked)
@@ -143,6 +146,22 @@ else
     private static string NormalizeText(string text)
     {
         return text.Trim().Replace("\r\n", " ").Replace("\n", " ").Replace("  ", " ");
+    }
+
+    private async Task DeleteScripture(Guid id)
+    {
+        await ScriptureService.DeleteAsync(id);
+
+        if (selectedScripture?.Id == id)
+        {
+            selectedScripture = null;
+            gameStarted = false;
+            gameChecked = false;
+            isCorrect = false;
+            userAttempt = string.Empty;
+        }
+
+        await RefreshScripturesAsync();
     }
 
     private async Task RefreshScripturesAsync()
