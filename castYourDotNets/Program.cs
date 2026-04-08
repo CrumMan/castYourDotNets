@@ -35,11 +35,6 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddHttpClient(nameof(ScriptureService));
 builder.Services.AddScoped<ScriptureService>();
-// build the api address to pull values for scripture
-builder.Services.AddHttpClient<ScriptureService>(client =>
-{
-    client.BaseAddress = new Uri("http://localhost:5076");
-});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
