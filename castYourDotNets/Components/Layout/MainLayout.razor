@@ -1,11 +1,37 @@
 @inherits LayoutComponentBase
 
-<div class="app-layout">
-    <aside class="app-nav">
-        <NavMenu />
-    </aside>
+<div class="app-shell @(isDarkMode ? "theme-dark" : "theme-light")">
+    <button type="button"
+            class="theme-toggle @(isDarkMode ? "is-dark" : "is-light")"
+            @onclick="ToggleTheme"
+            aria-label="Switch to @(isDarkMode ? "light" : "dark") mode"
+            title="Switch to @(isDarkMode ? "light" : "dark") mode">
+        <span class="theme-toggle-track" aria-hidden="true">
+            <span class="theme-toggle-background theme-toggle-background-day"></span>
+            <span class="theme-toggle-background theme-toggle-background-night"></span>
+        </span>
+        <span class="theme-toggle-thumb" aria-hidden="true">
+            <span class="theme-toggle-icon theme-toggle-icon-sun"></span>
+            <span class="theme-toggle-icon theme-toggle-icon-moon"></span>
+        </span>
+    </button>
 
-    <main class="app-main">
-        @Body
-    </main>
+    <div class="app-layout">
+        <aside class="app-nav">
+            <NavMenu />
+        </aside>
+
+        <main class="app-main">
+            @Body
+        </main>
+    </div>
 </div>
+
+@code {
+    private bool isDarkMode;
+
+    private void ToggleTheme()
+    {
+        isDarkMode = !isDarkMode;
+    }
+}
