@@ -1,0 +1,315 @@
+@using System.Text.RegularExpressions
+@page "/scriptures"
+@rendermode InteractiveServer
+@inject ScriptureService ScriptureService
+@inject AuthSessionState AuthSession
+
+<PageTitle>Scriptures</PageTitle>
+
+@if (!AuthSession.IsAuthenticated)
+{
+    <section class="card auth-gate">
+        <p class="landing-eyebrow">Sign in required</p>
+        <h1>Sign in to access your memorization workspace.</h1>
+        <p>Create an account or sign in to save scriptures, edit your list, and begin practicing with purpose.</p>
+        <div class="landing-actions">
+            <a class="btn primary" href="/signin">Sign In</a>
+            <a class="btn" href="/signup">Create Account</a>
+        </div>
+    </section>
+}
+else
+{
+    <h1>Scriptures</h1>
+
+    <div class="scriptures-grid">
+        <section class="card">
+            <h2>@(isEditing ? "Edit Scripture" : "Add Scripture")</h2>
+
+            <EditForm Model="currentScripture" OnSubmit="SaveScripture" FormName="ScriptureForm">
+
+                <div class="form-field">
+                    <label>Scripture</label>
+                    <select class="input" @bind="selectedScriptureSource" @bind:after="OnScriptureSourceChanged">
+                        @foreach (var s in Enum.GetValues(typeof(Verse_Vault.Scripture)))
+                        {
+                            <option value="@s">@FormatEnumDisplay($"{s}")</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Book</label>
+                    <select class="input" @bind="selectedBook" @bind:after="OnBookChanged">
+                        @foreach (var book in books)
+                        {
+                            <option value="@book">@book</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Chapter</label>
+                    <select class="input" @bind="selectedChapter" @bind:after="OnChapterChanged">
+                        @foreach (var chap in chapters)
+                        {
+                            <option value="@chap">@chap</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Verse</label>
+                    <select class="input" @bind="selectedVerse" @bind:after="OnVerseChanged">
+                        @foreach (var v in verses)
+                        {
+                            <option value="@v">@v</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Text</label>
+                    <textarea class="input textarea" readonly>@CleanVerseText</textarea>
+                </div>
+
+                <div class="button-row">
+                    <button type="submit" class="btn primary">@(isEditing ? "Update" : "Add")</button>
+                    @if (isEditing)
+                    {
+                        <button type="button" class="btn" @onclick="CancelEdit">Cancel</button>
+                    }
+                </div>
+            </EditForm>
+        </section>
+
+        <section class="card">
+            <h2>Saved Scriptures</h2>
+
+            @if (scriptures.Count == 0)
+            {
+                <p>No scriptures saved yet.</p>
+            }
+            else
+            {
+                <ul class="scripture-list">
+                    @foreach (var scripture in scriptures)
+                    {
+                        <li class="scripture-item">
+                            <div>
+                                <p class="scripture-reference">@scripture.Reference</p>
+                                <p>@scripture.Text</p>
+                            </div>
+                            <div class="button-row">
+                                <button type="button" class="btn" @onclick="() => StartEdit(scripture)">Edit</button>
+                                <button type="button" class="btn danger"
+                                        @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+}
+
+@code {
+    private List<Verse_Vault> allVerses = new();
+    private List<string> books = new();
+    private List<string> chapters = new();
+    private List<int> verses = new();
+
+    private string selectedScriptureSource = nameof(Verse_Vault.Scripture.BookOfMormon);
+    private string selectedBook = string.Empty;
+    private string selectedChapter = string.Empty;
+    private int selectedVerse;
+
+    private Verse_Vault? currentVerse;
+
+    private List<Scripture> scriptures = [];
+    private Scripture currentScripture = new();
+    private bool isEditing;
+
+    private Verse_Vault.Scripture? SelectedScriptureEnum =>
+        Enum.TryParse<Verse_Vault.Scripture>(selectedScriptureSource, out var parsed) ? parsed : null;
+
+    private string CleanVerseText
+    {
+        get
+        {
+            if (currentVerse?.VerseText == null)
+                return "";
+            else
+                return Regex.Replace(currentVerse.VerseText, @"[^\w\s]", "");
+        }
+    }
+
+    private string FormatEnumDisplay(string value) =>
+        Regex.Replace(value, @"(?<=[a-z])(?=[A-Z])|(?<=[a-zA-Z])(?=\d)", " ").Trim();
+
+    protected override async Task OnInitializedAsync()
+    {
+        allVerses = await ScriptureService.GetAllVersesAsync();
+        RefreshBooks();
+        await RefreshScripturesAsync();
+    }
+
+    private void OnScriptureSourceChanged()
+    {
+        RefreshBooks();
+    }
+
+    private void OnBookChanged()
+    {
+        RefreshChapters();
+    }
+
+    private void OnChapterChanged()
+    {
+        RefreshVerses();
+    }
+
+    private void OnVerseChanged()
+    {
+        LoadSelectedVerse();
+    }
+
+    private void RefreshBooks()
+    {
+        books = allVerses
+            .Where(v => v.scripture == SelectedScriptureEnum)
+            .Select(v => v.book)
+            .Distinct()
+            .ToList();
+
+        if (books.Any() && !books.Contains(selectedBook))
+        {
+            selectedBook = books.First();
+        }
+
+        RefreshChapters();
+    }
+
+    private void RefreshChapters()
+    {
+        chapters = allVerses
+            .Where(v => v.scripture == SelectedScriptureEnum && v.book == selectedBook)
+            .Select(v => v.Chapter.ToString())
+            .Distinct()
+            .OrderBy(c => int.Parse(c))
+            .ToList();
+
+        if (chapters.Any() && !chapters.Contains(selectedChapter))
+        {
+            selectedChapter = chapters.First();
+        }
+
+        RefreshVerses();
+    }
+
+    private void RefreshVerses()
+    {
+        verses = allVerses
+            .Where(v => v.scripture == SelectedScriptureEnum
+                     && v.book == selectedBook
+                     && v.Chapter.ToString() == selectedChapter)
+            .Select(v => v.VerseInt)
+            .OrderBy(v => v)
+            .ToList();
+
+        if (verses.Any() && !verses.Contains(selectedVerse))
+        {
+            selectedVerse = verses.First();
+        }
+
+        LoadSelectedVerse();
+    }
+
+    private void LoadSelectedVerse()
+    {
+        currentVerse = allVerses.FirstOrDefault(v =>
+            v.scripture == SelectedScriptureEnum &&
+            v.book == selectedBook &&
+            v.Chapter.ToString() == selectedChapter &&
+            v.VerseInt == selectedVerse);
+    }
+
+    private async Task SaveScripture()
+    {
+        if (currentVerse is null) return;
+
+        currentScripture.Reference = currentVerse.Verse_Refrence;
+        currentScripture.ScriptureSource = selectedScriptureSource;
+        currentScripture.Book = selectedBook;
+        currentScripture.Chapter = int.Parse(selectedChapter);
+        currentScripture.VerseNumber = selectedVerse;
+        currentScripture.Text = CleanVerseText;
+
+        if (isEditing)
+        {
+            await ScriptureService.UpdateAsync(currentScripture);
+            isEditing = false;
+        }
+        else
+        {
+            await ScriptureService.AddAsync(currentScripture);
+        }
+
+        currentScripture = new Scripture();
+        await RefreshScripturesAsync();
+    }
+
+    private void StartEdit(Scripture scripture)
+    {
+        currentScripture = new Scripture
+        {
+            Id = scripture.Id,
+            Reference = scripture.Reference,
+            ScriptureSource = scripture.ScriptureSource,
+            Book = scripture.Book,
+            Chapter = scripture.Chapter,
+            VerseNumber = scripture.VerseNumber,
+            Text = scripture.Text,
+            CreatedAtUtc = scripture.CreatedAtUtc,
+            IsMemorized = scripture.IsMemorized,
+            PracticeCount = scripture.PracticeCount,
+            CurrentStreakDays = scripture.CurrentStreakDays,
+            LastPracticedAtUtc = scripture.LastPracticedAtUtc,
+            MemorizedAtUtc = scripture.MemorizedAtUtc
+        };
+
+        selectedScriptureSource = scripture.ScriptureSource;
+        RefreshBooks();
+        selectedBook = scripture.Book;
+        RefreshChapters();
+        selectedChapter = scripture.Chapter.ToString();
+        RefreshVerses();
+        selectedVerse = scripture.VerseNumber;
+        LoadSelectedVerse();
+
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+        currentScripture = new Scripture();
+    }
+
+    private async Task DeleteScripture(Guid id)
+    {
+        await ScriptureService.DeleteAsync(id);
+
+        if (isEditing && currentScripture.Id == id)
+        {
+            CancelEdit();
+        }
+
+        await RefreshScripturesAsync();
+    }
+
+    private async Task RefreshScripturesAsync()
+    {
+        scriptures = (await ScriptureService.GetAllAsync()).ToList();
+    }
+}

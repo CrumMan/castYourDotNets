@@ -1,0 +1,75 @@
+@implements IDisposable
+@inject AuthSessionState AuthSession
+@inject NavigationManager Navigation
+
+<nav>
+    <h2 class="nav-title">Verse Vault</h2>
+
+    @if (AuthSession.IsAuthenticated)
+    {
+        <p class="nav-user-chip">Signed in as @AuthSession.Username</p>
+    }
+
+    <ul class="nav-list">
+        <li>
+            <NavLink href="/" Match="NavLinkMatch.All">Home</NavLink>
+        </li>
+
+        @if (AuthSession.IsAuthenticated)
+        {
+            <li>
+                <NavLink href="/scriptures">Scriptures</NavLink>
+            </li>
+            <li>
+                <NavLink href="/memorize">Memorize</NavLink>
+            </li>
+            <li>
+                <NavLink href="/practice">Practice</NavLink>
+            </li>
+            <li>
+                <NavLink href="/progress">Progress</NavLink>
+            </li>
+            <li>
+                <NavLink href="/about">About</NavLink>
+            </li>
+            <li>
+                <button type="button" class="nav-logout" @onclick="SignOut">Sign Out</button>
+            </li>
+        }
+        else
+        {
+            <li>
+                <NavLink href="/signin">Sign In</NavLink>
+            </li>
+            <li>
+                <NavLink href="/signup">Sign Up</NavLink>
+            </li>
+            <li>
+                <NavLink href="/about">About</NavLink>
+            </li>
+        }
+    </ul>
+</nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthSession.Changed += OnAuthChanged;
+    }
+
+    private void OnAuthChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void SignOut()
+    {
+        AuthSession.SignOut();
+        Navigation.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        AuthSession.Changed -= OnAuthChanged;
+    }
+}

@@ -1,0 +1,124 @@
+@page "/practice"
+@rendermode InteractiveServer
+@inject ScriptureService ScriptureService
+@inject AuthSessionState AuthSession
+
+<PageTitle>Practice</PageTitle>
+
+@if (!AuthSession.IsAuthenticated)
+{
+    <section class="card auth-gate">
+        <p class="landing-eyebrow">Sign in required</p>
+        <h1>Sign in to practice your saved verses.</h1>
+        <p>Once you sign in, you can review, self-check, and strengthen your recall with each session.</p>
+        <div class="landing-actions">
+            <a class="btn primary" href="/signin">Sign In</a>
+            <a class="btn" href="/signup">Create Account</a>
+        </div>
+    </section>
+}
+else if (currentScripture is null)
+{
+    <h1>Practice</h1>
+
+    <section class="card">
+        <p>No scriptures available for practice. Add one in the Scriptures page.</p>
+    </section>
+}
+else
+{
+    <h1>Practice</h1>
+
+    <section class="card practice-card">
+        <p class="scripture-reference">@currentScripture.Reference</p>
+
+        <p class="scripture-topic">@currentScripture.Book @currentScripture.Chapter:@currentScripture.VerseNumber</p>
+
+        <div class="practice-text">
+            @if (showText)
+            {
+                <p>@currentScripture.Text</p>
+            }
+            else
+            {
+                <p>Try to recite this verse from memory, then reveal text to self-check.</p>
+            }
+        </div>
+
+        <div class="button-row">
+            <button type="button" class="btn" @onclick="RevealText">Reveal Text</button>
+            <button type="button" class="btn primary" @onclick="MarkSuccess">I Got It</button>
+            <button type="button" class="btn danger" @onclick="MarkNeedsWork">Need Work</button>
+            <button type="button" class="btn" @onclick="ToggleMemorized">
+                @(currentScripture.IsMemorized ? "Mark Unmemorized" : "Mark Memorized")
+            </button>
+            <button type="button" class="btn" @onclick="LoadNextAsync">Next Verse</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(feedback))
+        {
+            <p class="practice-feedback">@feedback</p>
+        }
+    </section>
+}
+
+@code {
+    private Scripture? currentScripture;
+    private bool showText;
+    private string feedback = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNextAsync();
+    }
+
+    private void RevealText()
+    {
+        showText = true;
+    }
+
+    private async Task MarkSuccess()
+    {
+        if (currentScripture is null)
+        {
+            return;
+        }
+
+        await ScriptureService.RecordPracticeAsync(currentScripture.Id, succeeded: true);
+        currentScripture = await ScriptureService.GetByIdAsync(currentScripture.Id);
+        feedback = "Great work. Recorded as a successful practice.";
+    }
+
+    private async Task MarkNeedsWork()
+    {
+        if (currentScripture is null)
+        {
+            return;
+        }
+
+        await ScriptureService.RecordPracticeAsync(currentScripture.Id, succeeded: false);
+        currentScripture = await ScriptureService.GetByIdAsync(currentScripture.Id);
+        feedback = "Recorded. Keep practicing this one.";
+    }
+
+    private async Task ToggleMemorized()
+    {
+        if (currentScripture is null)
+        {
+            return;
+        }
+
+        await ScriptureService.SetMemorizedAsync(currentScripture.Id, !currentScripture.IsMemorized);
+        currentScripture = await ScriptureService.GetByIdAsync(currentScripture.Id);
+        feedback = currentScripture?.IsMemorized == true
+            ? "Marked as memorized."
+            : "Marked as not memorized.";
+    }
+
+    private async Task LoadNextAsync()
+    {
+        currentScripture = await ScriptureService.GetNextPracticeTargetAsync();
+        showText = false;
+        feedback = string.Empty;
+    }
+}

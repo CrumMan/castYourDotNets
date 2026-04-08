@@ -1,0 +1,126 @@
+@page "/signup"
+@rendermode InteractiveServer
+@inject AccountApiClient AccountApiClient
+@inject NavigationManager Navigation
+
+<PageTitle>Sign Up | Verse Vault</PageTitle>
+
+<div class="auth-page">
+    <section class="auth-hero-panel">
+        <div class="card auth-copy-card">
+            <p class="landing-eyebrow">Create your account</p>
+            <h1>Start building a scripture memorization habit that lasts.</h1>
+            <p class="auth-helper">
+                Join Verse Vault to save meaningful passages, practice them regularly, and grow through consistent
+                spiritual study.
+            </p>
+
+            <ul class="auth-benefits">
+                <li>Save verses that touch your heart</li>
+                <li>Practice in a clean, distraction-free space</li>
+                <li>Track progress and celebrate consistency</li>
+            </ul>
+        </div>
+
+        <div class="card auth-card">
+            <p class="landing-eyebrow">Sign Up</p>
+            <h2>Create your Verse Vault account</h2>
+            <p class="auth-helper">It only takes a moment to begin.</p>
+
+            <EditForm Model="form" OnSubmit="HandleSubmit" FormName="SignUpForm">
+                <div class="form-field">
+                    <label for="signup-username">Username</label>
+                    <input id="signup-username" class="input" @bind="form.Username" autocomplete="username" />
+                </div>
+
+                <div class="form-field">
+                    <label for="signup-password">Password</label>
+                    <input id="signup-password" class="input" type="password" @bind="form.Password"
+                           autocomplete="new-password" />
+                </div>
+
+                <div class="form-field">
+                    <label for="signup-confirm-password">Confirm Password</label>
+                    <input id="signup-confirm-password" class="input" type="password" @bind="form.ConfirmPassword"
+                           autocomplete="new-password" />
+                </div>
+
+                <p class="auth-note">Use at least 8 characters with letters and numbers.</p>
+
+                @if (errorMessages.Count > 0)
+                {
+                    <div class="auth-status error">
+                        @foreach (var error in errorMessages)
+                        {
+                            <p>@error</p>
+                        }
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(successMessage))
+                {
+                    <div class="auth-status success">
+                        <p>@successMessage</p>
+                    </div>
+                }
+
+                <button type="submit" class="btn primary auth-submit" disabled="@isSubmitting">
+                    @(isSubmitting ? "Creating Account..." : "Create Account")
+                </button>
+            </EditForm>
+
+            <p class="auth-switch">Already have an account? <a href="/signin">Sign in</a></p>
+        </div>
+    </section>
+</div>
+
+@code {
+    private readonly SignUpFormModel form = new();
+    private bool isSubmitting;
+    private string successMessage = string.Empty;
+    private List<string> errorMessages = [];
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        successMessage = string.Empty;
+        errorMessages = [];
+
+        if (!string.Equals(form.Password, form.ConfirmPassword, StringComparison.Ordinal))
+        {
+            errorMessages = ["Passwords do not match."];
+            isSubmitting = false;
+            return;
+        }
+
+        var request = new RegisterAccountRequest
+        {
+            Username = form.Username,
+            Password = form.Password
+        };
+
+        var (account, errors) = await AccountApiClient.SignUpAsync(request);
+
+        if (account is null)
+        {
+            errorMessages = FlattenErrors(errors);
+            isSubmitting = false;
+            return;
+        }
+
+        successMessage = $"Account created for {account.Username}. Redirecting to sign in...";
+        isSubmitting = false;
+        await Task.Delay(900);
+        Navigation.NavigateTo("/signin");
+    }
+
+    private static List<string> FlattenErrors(IDictionary<string, string[]> errors) =>
+        errors.SelectMany(pair => pair.Value).Distinct().ToList();
+
+    private sealed class SignUpFormModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

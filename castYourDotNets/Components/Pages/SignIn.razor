@@ -1,0 +1,131 @@
+@page "/signin"
+@rendermode InteractiveServer
+@inject AccountApiClient AccountApiClient
+@inject AuthSessionState AuthSession
+@inject NavigationManager Navigation
+
+<PageTitle>Sign In | Verse Vault</PageTitle>
+
+<div class="auth-page">
+    <section class="auth-hero-panel">
+        <div class="card auth-copy-card">
+            <p class="landing-eyebrow">Welcome back</p>
+            <h1>Sign in to continue your scripture memorization journey.</h1>
+            <p class="auth-helper">
+                Return to your Verse Vault, review meaningful verses, and keep building a steady daily habit of
+                scripture study.
+            </p>
+
+            <ul class="auth-benefits">
+                <li>Access your memorization workspace</li>
+                <li>Practice verses with calm, focused routines</li>
+                <li>Track your progress one day at a time</li>
+            </ul>
+        </div>
+
+        <div class="card auth-card">
+            @if (AuthSession.IsAuthenticated)
+            {
+                <p class="landing-eyebrow">You are signed in</p>
+                <h2>Welcome, @AuthSession.Username</h2>
+                <p class="auth-helper">Your memorization tools are ready.</p>
+                <div class="landing-actions">
+                    <a class="btn primary" href="/scriptures">Open Scriptures</a>
+                    <button type="button" class="btn" @onclick="SignOut">Sign Out</button>
+                </div>
+            }
+            else
+            {
+                <p class="landing-eyebrow">Sign In</p>
+                <h2>Continue where you left off</h2>
+                <p class="auth-helper">Enter your account details to open your memorization space.</p>
+
+                <EditForm Model="form" OnSubmit="HandleSubmit" FormName="SignInForm">
+                    <div class="form-field">
+                        <label for="signin-username">Username</label>
+                        <input id="signin-username" class="input" @bind="form.Username" autocomplete="username" />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="signin-password">Password</label>
+                        <input id="signin-password" class="input" type="password" @bind="form.Password"
+                               autocomplete="current-password" />
+                    </div>
+
+                    @if (errorMessages.Count > 0)
+                    {
+                        <div class="auth-status error">
+                            @foreach (var error in errorMessages)
+                            {
+                                <p>@error</p>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(successMessage))
+                    {
+                        <div class="auth-status success">
+                            <p>@successMessage</p>
+                        </div>
+                    }
+
+                    <button type="submit" class="btn primary auth-submit" disabled="@isSubmitting">
+                        @(isSubmitting ? "Signing In..." : "Sign In")
+                    </button>
+                </EditForm>
+
+                <p class="auth-switch">New here? <a href="/signup">Create your account</a></p>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    private readonly SignInFormModel form = new();
+    private bool isSubmitting;
+    private string successMessage = string.Empty;
+    private List<string> errorMessages = [];
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        successMessage = string.Empty;
+        errorMessages = [];
+
+        var request = new LoginRequest
+        {
+            Username = form.Username,
+            Password = form.Password
+        };
+
+        var (authentication, errors) = await AccountApiClient.SignInAsync(request);
+
+        if (authentication is null)
+        {
+            errorMessages = FlattenErrors(errors);
+            isSubmitting = false;
+            return;
+        }
+
+        AuthSession.SignIn(authentication);
+        successMessage = $"Welcome back, {authentication.Account.Username}. Redirecting to your scriptures...";
+        isSubmitting = false;
+        Navigation.NavigateTo("/scriptures");
+    }
+
+    private void SignOut()
+    {
+        AuthSession.SignOut();
+        successMessage = string.Empty;
+        errorMessages = [];
+    }
+
+    private static List<string> FlattenErrors(IDictionary<string, string[]> errors) =>
+        errors.SelectMany(pair => pair.Value).Distinct().ToList();
+
+    private sealed class SignInFormModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

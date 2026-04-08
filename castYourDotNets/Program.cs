@@ -1,4 +1,5 @@
 using System.Text;
+using castYourDotNets.Components;
 using castYourDotNets.Contracts;
 using castYourDotNets.Data;
 using castYourDotNets.Models;
@@ -28,6 +29,17 @@ builder.Services.AddScoped<IPasswordHasher<UserAccount>, PasswordHasher<UserAcco
 builder.Services.AddScoped<AccountRegistrationService>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<AccountApiClient>();
+builder.Services.AddScoped<AuthSessionState>();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+builder.Services.AddHttpClient(nameof(ScriptureService));
+builder.Services.AddScoped<ScriptureService>();
+// build the api address to pull values for scripture
+builder.Services.AddHttpClient<ScriptureService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5076");
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -54,10 +66,15 @@ using (var scope = app.Services.CreateScope())
     await dbContext.Database.EnsureCreatedAsync();
 }
 
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
-app.MapGet("/", () => Results.Ok(new
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+
+app.MapGet("/api", () => Results.Ok(new
 {
     name = "Verse Vault",
     purpose = "Help users create accounts and track scripture memorization progress.",
@@ -165,6 +182,131 @@ app.MapGet("/api/scriptures", async (
     return Results.Ok(pages
         .OrderByDescending(page => page.CreatedAtUtc)
         .Select(ToPageResponse));
+}).RequireAuthorization();
+
+app.MapGet("/api/scriptures/{id:guid}", async (
+    Guid id,
+    HttpContext httpContext,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var userId = httpContext.User.GetRequiredUserId();
+    var page = await dbContext.PageClasses
+        .SingleOrDefaultAsync(page => page.Id == id && page.UserId == userId, cancellationToken);
+
+    return page is null ? Results.NotFound() : Results.Ok(ToPageResponse(page));
+}).RequireAuthorization();
+
+app.MapPut("/api/scriptures/{id:guid}", async (
+    Guid id,
+    Scripture request,
+    HttpContext httpContext,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var userId = httpContext.User.GetRequiredUserId();
+    var existingPage = await dbContext.PageClasses
+        .SingleOrDefaultAsync(page => page.Id == id && page.UserId == userId, cancellationToken);
+
+    if (existingPage is null)
+    {
+        return Results.NotFound();
+    }
+
+    var replacementPage = new PageClass(
+        userId,
+        string.IsNullOrWhiteSpace(request.ScriptureSource) ? existingPage.Source : request.ScriptureSource,
+        request.Book,
+        request.Chapter,
+        request.VerseNumber,
+        request.VerseNumber,
+        request.Text,
+        existingPage.Notes);
+
+    if (request.IsMemorized)
+    {
+        replacementPage.MarkMemorized();
+    }
+
+    dbContext.PageClasses.Remove(existingPage);
+    dbContext.PageClasses.Add(replacementPage);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    return Results.Ok(ToPageResponse(replacementPage));
+}).RequireAuthorization();
+
+app.MapDelete("/api/scriptures/{id:guid}", async (
+    Guid id,
+    HttpContext httpContext,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var userId = httpContext.User.GetRequiredUserId();
+    var page = await dbContext.PageClasses
+        .SingleOrDefaultAsync(page => page.Id == id && page.UserId == userId, cancellationToken);
+
+    if (page is null)
+    {
+        return Results.NotFound();
+    }
+
+    dbContext.PageClasses.Remove(page);
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return Results.NoContent();
+}).RequireAuthorization();
+
+app.MapPost("/api/scriptures/{id:guid}/practice", async (
+    Guid id,
+    ScripturePracticeRequest request,
+    HttpContext httpContext,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var userId = httpContext.User.GetRequiredUserId();
+    var page = await dbContext.PageClasses
+        .SingleOrDefaultAsync(page => page.Id == id && page.UserId == userId, cancellationToken);
+
+    if (page is null)
+    {
+        return Results.NotFound();
+    }
+
+    if (request.Succeeded)
+    {
+        page.RecordReview();
+    }
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return Results.Ok(ToPageResponse(page));
+}).RequireAuthorization();
+
+app.MapPost("/api/scriptures/{id:guid}/memorized", async (
+    Guid id,
+    ScriptureMemorizedRequest request,
+    HttpContext httpContext,
+    VerseVaultDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var userId = httpContext.User.GetRequiredUserId();
+    var page = await dbContext.PageClasses
+        .SingleOrDefaultAsync(page => page.Id == id && page.UserId == userId, cancellationToken);
+
+    if (page is null)
+    {
+        return Results.NotFound();
+    }
+
+    if (request.IsMemorized)
+    {
+        page.MarkMemorized();
+    }
+    else
+    {
+        page.MarkNotMemorized();
+    }
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return Results.Ok(ToPageResponse(page));
 }).RequireAuthorization();
 
 app.Run();
