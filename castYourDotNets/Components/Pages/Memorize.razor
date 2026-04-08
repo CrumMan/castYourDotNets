@@ -151,6 +151,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // The memorization flow is private to signed-in users, so send guests back through sign-in first.
         if (!AuthService.IsAuthenticated)
         {
             Navigation.NavigateTo("/signin");

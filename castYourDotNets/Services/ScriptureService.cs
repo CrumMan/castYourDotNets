@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace castYourDotNets.Services;
 
+// Central API wrapper for the signed-in scripture, practice, memorize, and dashboard pages.
 public sealed class ScriptureService
 {
     private readonly HttpClient httpClient;
@@ -31,6 +32,7 @@ public sealed class ScriptureService
         return await response.Content.ReadFromJsonAsync<Scripture>(cancellationToken: cancellationToken);
     }
 
+    // Picks the next verse to review by favoring items that are not memorized and have fewer recent practices.
     public async Task<Scripture?> GetNextPracticeTargetAsync(CancellationToken cancellationToken = default)
     {
         var scriptures = await GetAllAsync(cancellationToken);

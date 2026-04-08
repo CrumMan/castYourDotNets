@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace castYourDotNets.Services;
 
+// Keeps the signed-in UI state in one place for the interactive Blazor pages.
 public sealed class AuthUiService
 {
     private readonly HttpClient httpClient;
@@ -16,6 +17,7 @@ public sealed class AuthUiService
         httpClient.BaseAddress ??= new Uri(navigationManager.BaseUri);
     }
 
+    // The current session is kept in memory so the nav and protected pages can react immediately after sign-in.
     public AuthenticationResponse? CurrentSession { get; private set; }
 
     public bool IsAuthenticated =>
@@ -25,6 +27,7 @@ public sealed class AuthUiService
 
     public event Action? AuthenticationStateChanged;
 
+    // After registration succeeds, the user is immediately signed in and sent into the private app area.
     public async Task<AuthActionResult> RegisterAsync(
         string username,
         string password,
@@ -90,6 +93,7 @@ public sealed class AuthUiService
         AuthenticationStateChanged?.Invoke();
     }
 
+    // Converts API validation responses into a simple dictionary that the auth forms can display inline.
     private static async Task<Dictionary<string, string[]>> ReadErrorsAsync(
         HttpResponseMessage response,
         CancellationToken cancellationToken)

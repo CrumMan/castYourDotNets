@@ -118,7 +118,8 @@
 
                             <div class="button-row">
                                 <button type="button" class="btn" @onclick="() => StartEdit(scripture)">Edit</button>
-                                <button type="button" class="btn danger" @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
+                                <button type="button" class="btn danger"
+                                        @onclick="() => DeleteScripture(scripture.Id)">Delete</button>
                             </div>
                         </li>
                     }
@@ -166,6 +167,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Redirect anonymous visitors back to the public auth flow before showing the private scripture tools.
         if (!AuthService.IsAuthenticated)
         {
             Navigation.NavigateTo("/signin");

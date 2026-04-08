@@ -29,10 +29,12 @@ builder.Services.AddScoped<IPasswordHasher<UserAccount>, PasswordHasher<UserAcco
 builder.Services.AddScoped<AccountRegistrationService>();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<TokenService>();
+// These UI-facing services power the new public landing page, auth flow, and signed-in scripture experience.
 builder.Services.AddScoped<AuthUiService>();
 builder.Services.AddScoped<ScriptureService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+// Named HttpClient registrations keep the Blazor pages and services talking to the local API consistently.
 builder.Services.AddHttpClient(nameof(ScriptureService), client =>
 {
     client.BaseAddress = new Uri("http://localhost:5076");
@@ -142,6 +144,7 @@ app.MapGet("/api", () => Results.Ok(new
     }
 }));
 
+// Public account endpoints used by the new sign-up and sign-in pages.
 app.MapPost("/api/accounts/register", async (
     RegisterAccountRequest request,
     AccountRegistrationService registrationService,

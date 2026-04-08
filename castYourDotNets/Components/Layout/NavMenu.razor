@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 
 <nav>
+    @* The nav swaps between public links and signed-in app tools based on the in-memory auth session. *@
     <h2 class="nav-title">Verse Vault</h2>
     <p class="nav-subtitle">
         @(AuthService.IsAuthenticated ? $"Signed in as {AuthService.CurrentUsername}" : "Public landing page")

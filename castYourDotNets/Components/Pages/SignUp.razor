@@ -7,12 +7,14 @@
 <PageTitle>Sign Up | Verse Vault</PageTitle>
 
 <div class="auth-shell">
+    @* Left side = account creation form, right side = onboarding encouragement and scripture-centered messaging. *@
     <section class="card auth-panel">
         <div class="auth-header">
             <p class="landing-eyebrow">Create your account</p>
             <h1>Start building a scripture memorization habit today</h1>
             <p class="auth-lead">
-                Create your Verse Vault account to begin saving meaningful verses and growing a steady routine of study and remembrance.
+                Create your Verse Vault account to begin saving meaningful verses and growing a steady routine of study
+                and remembrance.
             </p>
         </div>
 
@@ -41,7 +43,8 @@
                 <div class="auth-field">
                     <label for="signup-password">Password</label>
                     <div class="password-row">
-                        <InputText id="signup-password" class="input" type="@(showPassword ? "text" : "password")" @bind-Value="model.Password" />
+                        <InputText id="signup-password" class="input" type="@(showPassword ? "text" : "password")"
+                                   @bind-Value="model.Password" />
                         <button type="button" class="btn auth-toggle" @onclick="TogglePassword">
                             @(showPassword ? "Hide" : "Show")
                         </button>
@@ -51,7 +54,8 @@
 
                 <div class="auth-field">
                     <label for="signup-confirm">Confirm Password</label>
-                    <InputText id="signup-confirm" class="input" type="@(showConfirmPassword ? "text" : "password")" @bind-Value="model.ConfirmPassword" />
+                    <InputText id="signup-confirm" class="input" type="@(showConfirmPassword ? "text" : "password")"
+                               @bind-Value="model.ConfirmPassword" />
                     <ValidationMessage For="() => model.ConfirmPassword" />
                 </div>
 
@@ -77,7 +81,8 @@
                 </div>
 
                 <p class="auth-link-row">
-                    Your progress stays tied to your session and is designed to support a personal, scripture-centered routine.
+                    Your progress stays tied to your session and is designed to support a personal, scripture-centered
+                    routine.
                 </p>
             </EditForm>
         }
@@ -93,11 +98,12 @@
         </ul>
 
         <blockquote class="card quote-card quote-card-featured">
-            <p>“I think it is very helpful if you begin today to learn a few of the teachings of Jesus Christ and have them in your memory.”</p>
-            <footer>— Elder Neil L. Andersen</footer>
-        </blockquote>
-    </aside>
-</div>
+            <p>“I think it is very helpful if you begin today to learn a few of the teachings of Jesus Christ and have
+                them in your memory.”</p>
+                <footer>— Elder Neil L. Andersen</footer>
+            </blockquote>
+        </aside>
+    </div>
 
 @code {
     private readonly SignUpModel model = new();

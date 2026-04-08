@@ -39,47 +39,48 @@
                 <div>
                     <p class="landing-eyebrow">Current focus verse</p>
                     <p class="scripture-reference">@currentScripture.Reference</p>
-                    <p class="scripture-topic">@currentScripture.Book @currentScripture.Chapter:@currentScripture.VerseNumber</p>
+                    <p class="scripture-topic">@currentScripture.Book
+                        @currentScripture.Chapter:@currentScripture.VerseNumber</p>
+                    </div>
+
+                    <span class="status-chip @(currentScripture.IsMemorized ? "success" : "info")">
+                        @(currentScripture.IsMemorized ? "Memorized" : "In Progress")
+                    </span>
                 </div>
 
-                <span class="status-chip @(currentScripture.IsMemorized ? "success" : "info")">
-                    @(currentScripture.IsMemorized ? "Memorized" : "In Progress")
-                </span>
-            </div>
+                <div class="list-meta">
+                    <span>Attempts: @currentScripture.PracticeCount</span>
+                    <span>Streak: @currentScripture.CurrentStreakDays day(s)</span>
+                </div>
 
-            <div class="list-meta">
-                <span>Attempts: @currentScripture.PracticeCount</span>
-                <span>Streak: @currentScripture.CurrentStreakDays day(s)</span>
-            </div>
+                <div class="practice-text">
+                    @if (showText)
+                    {
+                        <p>@currentScripture.Text</p>
+                    }
+                    else
+                    {
+                        <p>Try to recite this verse from memory, then reveal the text to self-check your accuracy.</p>
+                    }
+                </div>
 
-            <div class="practice-text">
-                @if (showText)
+                <div class="button-row">
+                    <button type="button" class="btn" @onclick="RevealText">Reveal Text</button>
+                    <button type="button" class="btn primary" @onclick="MarkSuccess">I Got It</button>
+                    <button type="button" class="btn danger" @onclick="MarkNeedsWork">Need Work</button>
+                    <button type="button" class="btn" @onclick="ToggleMemorized">
+                        @(currentScripture.IsMemorized ? "Mark Unmemorized" : "Mark Memorized")
+                    </button>
+                    <button type="button" class="btn" @onclick="LoadNextAsync">Next Verse</button>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(feedback))
                 {
-                    <p>@currentScripture.Text</p>
+                    <p class="practice-feedback">@feedback</p>
                 }
-                else
-                {
-                    <p>Try to recite this verse from memory, then reveal the text to self-check your accuracy.</p>
-                }
-            </div>
-
-            <div class="button-row">
-                <button type="button" class="btn" @onclick="RevealText">Reveal Text</button>
-                <button type="button" class="btn primary" @onclick="MarkSuccess">I Got It</button>
-                <button type="button" class="btn danger" @onclick="MarkNeedsWork">Need Work</button>
-                <button type="button" class="btn" @onclick="ToggleMemorized">
-                    @(currentScripture.IsMemorized ? "Mark Unmemorized" : "Mark Memorized")
-                </button>
-                <button type="button" class="btn" @onclick="LoadNextAsync">Next Verse</button>
-            </div>
-
-            @if (!string.IsNullOrWhiteSpace(feedback))
-            {
-                <p class="practice-feedback">@feedback</p>
-            }
-        </section>
-    }
-</div>
+            </section>
+        }
+    </div>
 
 @code {
     private Scripture? currentScripture;
@@ -88,6 +89,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Practice is part of the signed-in experience, so unauthenticated users are routed back to sign-in.
         if (!AuthService.IsAuthenticated)
         {
             Navigation.NavigateTo("/signin");
