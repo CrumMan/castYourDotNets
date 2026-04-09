@@ -1,12 +1,13 @@
 @page "/login"
 @using castYourDotNets.Contracts
+@rendermode InteractiveServer
 @inject LoginService LoginService
 @inject NavigationManager Navigation
 
 <h2 class="auth-title">Login</h2>
 
-<EditForm Model="model" OnValidSubmit="HandleLogin" FormName="loginForm">
-    @* <DataAnnotationsValidator /> *@
+<EditForm Model="model" OnSubmit="HandleLogin" FormName="loginForm">
+    <DataAnnotationsValidator />
     <ValidationSummary />
 
     <div class="auth-container">
@@ -39,7 +40,6 @@
             Username = model.Username,
             Password = model.Password
         };
-
         var result = await LoginService.LoginAsync(request);
 
         if (result.Succeeded)

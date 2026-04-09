@@ -1,12 +1,14 @@
 @page "/register"
 @using castYourDotNets.Contracts
+@using System
+@rendermode InteractiveServer
 @inject AccountRegistrationService RegistrationService
 @inject NavigationManager Navigation
 
 <h2 class="auth-title">Create Account</h2>
 
 <EditForm FormName="RegisterForm" Model="model" OnValidSubmit="HandleRegister">
-    @* <DataAnnotationsValidator /> *@
+    <DataAnnotationsValidator />
     <ValidationSummary />
 
     <div class="auth-container">
@@ -41,6 +43,8 @@
         Password = "",
         ConfirmPassword = ""
     };
+    
+    
 
     private async Task HandleRegister()
     {
@@ -49,6 +53,7 @@
             model.ServerError = "Passwords do not match.";
             return;
         }
+        System.Console.WriteLine($"started registration process with user: {model.Username}"); //REMOVE AFTER TESTING
 
         var request = new RegisterAccountRequest
         {
