@@ -37,7 +37,7 @@ builder.Services.AddRazorComponents()
 // Named HttpClient registrations keep the Blazor pages and services talking to the local API consistently.
 builder.Services.AddHttpClient(nameof(ScriptureService), client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5076");
+    client.BaseAddress = new Uri("http://localhost:8080");
 });
 builder.Services.AddHttpClient(nameof(AuthUiService));
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -123,7 +123,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
-app.MapStaticAssets();
+app.UseStaticFiles();
 app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
